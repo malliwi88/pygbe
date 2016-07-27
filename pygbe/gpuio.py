@@ -11,8 +11,6 @@ try:
 except:
     pass
 
-from pygbe.classes import Event
-
 
 def dataTransfer(surf_array, field_array, ind, param, kernel):
     """

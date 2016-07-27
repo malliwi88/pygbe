@@ -2,7 +2,6 @@
 Matrix free formulation of the matrix vector product in the GMRES.
 """
 
-import time
 import numpy
 from numpy import pi
 

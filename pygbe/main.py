@@ -16,7 +16,6 @@ from argparse import ArgumentParser
 
 # Import self made modules
 from pygbe.gmres import gmres_mgs
-from pygbe.projection import get_phir
 from pygbe.classes import Timing, Parameters, IndexConstant
 from pygbe.gpuio import dataTransfer
 from pygbe.surface import initializeSurf, fill_surface, initializeField, fill_phi
@@ -24,9 +23,7 @@ from pygbe.output import print_summary
 from pygbe.matrixfree import (generateRHS, generateRHS_gpu, calculateEsolv,
                         coulombEnergy, calculateEsurf)
 
-from pygbe.util.readData import readVertex, readTriangle, readpqr, readParameters
-from pygbe.util.an_solution import an_P, two_sphere
-
+from pygbe.util.readData import readParameters
 from pygbe.tree.FMMutils import computeIndices, precomputeTerms, generateList
 
 try:

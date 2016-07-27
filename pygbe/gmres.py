@@ -26,14 +26,9 @@ Guidance code:
 
 import numpy
 import scipy
-import time
-import os
-
-from scipy.linalg         import get_blas_funcs, solve
-from scipy.sparse.sputils import upcast
-from scipy.sparse.linalg  import gmres as scipy_gmres
-
 from warnings import warn
+from scipy.sparse.sputils import upcast
+from scipy.linalg         import get_blas_funcs
 
 from pygbe.matrixfree import gmres_dot
 
@@ -84,9 +79,6 @@ def gmres_mgs(surf_array, field_array, X, b, param, ind0, timing, kernel):
     X          : array, an updated guess to the solution.
     """
 
-    output_path = os.path.join(
-        os.environ.get('PYGBE_PROBLEM_FOLDER'), 'OUTPUT')
-
     #Defining xtype as dtype of the problem, to decide which BLAS functions
     #import.
     xtype = upcast(X.dtype, b.dtype)
@@ -95,12 +87,18 @@ def gmres_mgs(surf_array, field_array, X, b, param, ind0, timing, kernel):
     # dotc is the conjugate dot, dotu does no conjugation
 
     if numpy.iscomplexobj(numpy.zeros((1,), dtype=xtype)):
-        [axpy, dotu, dotc, scal, rotg] =\
-            get_blas_funcs(['axpy', 'dotu', 'dotc', 'scal', 'rotg'], [X])
+        [axpy, dotu, dotc, scal, rotg] = get_blas_funcs(['axpy',
+                                                         'dotu',
+                                                         'dotc',
+                                                         'scal',
+                                                         'rotg'], [X])
     else:
         # real type
-        [axpy, dotu, dotc, scal, rotg] =\
-            get_blas_funcs(['axpy', 'dot', 'dot',  'scal', 'rotg'], [X])
+        [axpy, dotu, dotc, scal, rotg] = get_blas_funcs(['axpy',
+                                                         'dot',
+                                                         'dot',
+                                                         'scal',
+                                                         'rotg'], [X])
 
     # Make full use of direct access to BLAS by defining own norm
     def norm(z):
@@ -108,7 +106,6 @@ def gmres_mgs(surf_array, field_array, X, b, param, ind0, timing, kernel):
 
     #Defining dimension
     dimen = len(X)
-
 
     max_iter = param.max_iter
     R = param.restart
@@ -230,8 +227,9 @@ def gmres_mgs(surf_array, field_array, X, b, param, ind0, timing, kernel):
                 if rel_resid < tol:
                     break
 
-            if iteration%1==0:
-                print('Iteration: {}, relative residual: {}'.format(iteration,rel_resid))
+            if iteration % 1 == 0:
+                print('Iteration: {}, relative residual: {}'.format(iteration,
+                                                                    rel_resid))
 
             if (inner + 1 == R):
                 print('Residual: {}. Restart...'.format(rel_resid))
