@@ -460,15 +460,15 @@ def precomputeTerms(P, ind0):
         ind0.KKmkk = numpy.append(ind0.KKmkk, ind0.KK[i] - kk)
 
 
-def interactionList(surfSrc, surfTar, CJ, CI, theta, NCRIT, offTwg, offMlt,
+def interactionList(surf_src, surf_tar, CJ, CI, theta, NCRIT, offTwg, offMlt,
                     s_src):
     """
     It finds the list of cells which each twig cell interacts.
 
     Arguments
     ----------
-    surfSrc: class, source surface, the one that contains the gauss points.
-    surfTar: class, target surface, the one that contains the collocation
+    surf_src: class, source surface, the one that contains the gauss points.
+    surf_tar: class, target surface, the one that contains the collocation
                     points.
     CJ     : int, index of source cell.
     CI     : int, index of target cell.
@@ -490,32 +490,32 @@ def interactionList(surfSrc, surfTar, CJ, CI, theta, NCRIT, offTwg, offMlt,
                     for each twig cell.
     """
 
-    if (surfSrc.tree[CJ].ntarget >= NCRIT):
+    if (surf_src['tree'][CJ].ntarget >= NCRIT):
         for c in range(8):
-            if (surfSrc.tree[CJ].nchild & (1 << c)):
-                CC = surfSrc.tree[CJ].child[c]  # Points at child cell
-                dxi = surfSrc.tree[CC].xc - surfTar.tree[CI].xc
-                dyi = surfSrc.tree[CC].yc - surfTar.tree[CI].yc
-                dzi = surfSrc.tree[CC].zc - surfTar.tree[CI].zc
+            if (surf_src['tree'][CJ].nchild & (1 << c)):
+                CC = surf_src['tree'][CJ].child[c]  # Points at child cell
+                dxi = surf_src['tree'][CC].xc - surf_tar['tree'][CI].xc
+                dyi = surf_src['tree'][CC].yc - surf_tar['tree'][CI].yc
+                dzi = surf_src['tree'][CC].zc - surf_tar['tree'][CI].zc
                 r = numpy.sqrt(dxi * dxi + dyi * dyi + dzi * dzi)
-                if surfTar.tree[CI].r + surfSrc.tree[
+                if surf_tar['tree'][CI].r + surf_src['tree'][
                         CC].r > theta * r:  # Max distance between particles
                     offTwg, offMlt = interactionList(
-                        surfSrc, surfTar, CC, CI, theta, NCRIT, offTwg, offMlt,
+                        surf_src, surf_tar, CC, CI, theta, NCRIT, offTwg, offMlt,
                         s_src)
                 else:
-                    I = surfTar.tree[CI].M2P_size[s_src]
-                    surfTar.M2P_list[s_src, offMlt] = CC
+                    I = surf_tar['tree'][CI].M2P_size[s_src]
+                    surf_tar['M2P_list'][s_src, offMlt] = CC
                     offMlt += 1
     else:
-        twig_cell = surfSrc.tree[CJ].twig_array
-        surfTar.P2P_list[s_src, offTwg] = twig_cell
+        twig_cell = surf_src['tree'][CJ].twig_array
+        surf_tar['P2P_list'][s_src, offTwg] = twig_cell
         offTwg += 1
 
     return offTwg, offMlt
 
 
-def generateList(surf_array, field_array, param):
+def generate_list(surf_array, field_array, param):
     """
     Loops over the surfaces to then compute the interactionList().
 
@@ -534,26 +534,26 @@ def generateList(surf_array, field_array, param):
     # Allocate data
     maxTwigSize = 0
     for i in range(Nsurf):
-        maxTwigSize = max(len(surf_array[i].twig), maxTwigSize)
-        maxTwigSize = max(len(surf_array[i].tree), maxTwigSize)
+        maxTwigSize = max(len(surf_array[i]['twig']), maxTwigSize)
+        maxTwigSize = max(len(surf_array[i]['tree']), maxTwigSize)
 
     for i in range(Nsurf):
-        surf_array[i].P2P_list = numpy.zeros(
+        surf_array[i]['P2P_list'] = numpy.zeros(
             (Nsurf, maxTwigSize * maxTwigSize),
             dtype=numpy.int32)
-        surf_array[i].offsetTwigs = numpy.zeros(
+        surf_array[i]['offset_twigs'] = numpy.zeros(
             (Nsurf,
              maxTwigSize + 1), dtype=numpy.int32)
-        surf_array[i].M2P_list = numpy.zeros(
+        surf_array[i]['M2P_list'] = numpy.zeros(
             (Nsurf, maxTwigSize * maxTwigSize),
             dtype=numpy.int32)
-        surf_array[i].offsetMlt = numpy.zeros(
+        surf_array[i]['offsetMlt'] = numpy.zeros(
             (Nsurf,
              maxTwigSize + 1), dtype=numpy.int32)
-        for CI in surf_array[i].twig:
-            surf_array[i].tree[CI].M2P_list = numpy.zeros(
+        for CI in surf_array[i]['twig']:
+            surf_array[i]['tree'][CI].M2P_list = numpy.zeros(
                 (Nsurf, maxTwigSize), dtype=numpy.int32)
-            surf_array[i].tree[CI].M2P_size = numpy.zeros(Nsurf,
+            surf_array[i]['tree'][CI].M2P_size = numpy.zeros(Nsurf,
                                                           dtype=numpy.int32)
 
     # Generate list
@@ -569,14 +569,14 @@ def generateList(surf_array, field_array, param):
                 offTwg = 0
                 offMlt = 0
                 ii = 0
-                for CI in surf_array[s_tar].twig:
+                for CI in surf_array[s_tar]['twig']:
                     if s_src != s_tar:  # Non-self interaction
                         CJ = 0
                         offTwg, offMlt = interactionList(
                             surf_array[s_src], surf_array[s_tar], CJ, CI,
                             param.theta, param.NCRIT, offTwg, offMlt, s_src)
-                        surf_array[s_tar].offsetTwigs[s_src, ii + 1] = offTwg
-                        surf_array[s_tar].offsetMlt[s_src, ii + 1] = offMlt
+                        surf_array[s_tar]['offset_twigs'][s_src, ii + 1] = offTwg
+                        surf_array[s_tar]['offsetMlt'][s_src, ii + 1] = offMlt
                         ii += 1
 
     # Self interaction
@@ -584,33 +584,33 @@ def generateList(surf_array, field_array, param):
         offTwg = 0
         offMlt = 0
         ii = 0
-        for CI in surf_array[s].twig:
+        for CI in surf_array[s]['twig']:
             CJ = 0
             offTwg, offMlt = interactionList(surf_array[s], surf_array[s], CJ,
                                              CI, param.theta, param.NCRIT,
                                              offTwg, offMlt, s)
-            surf_array[s].offsetTwigs[s, ii + 1] = offTwg
-            surf_array[s].offsetMlt[s, ii + 1] = offMlt
+            surf_array[s]['offset_twigs'][s, ii + 1] = offTwg
+            surf_array[s]['offsetMlt'][s, ii + 1] = offMlt
             ii += 1
 
     for s_tar in range(Nsurf):
-        surf_array[s_tar].xcSort = numpy.zeros((Nsurf, maxTwigSize *
-                                                maxTwigSize))
-        surf_array[s_tar].ycSort = numpy.zeros((Nsurf, maxTwigSize *
-                                                maxTwigSize))
-        surf_array[s_tar].zcSort = numpy.zeros((Nsurf, maxTwigSize *
+        surf_array[s_tar]['xcSort'] = numpy.zeros((Nsurf, maxTwigSize *
+                                                    maxTwigSize))
+        surf_array[s_tar]['ycSort'] = numpy.zeros((Nsurf, maxTwigSize *
+                                                    maxTwigSize))
+        surf_array[s_tar]['zcSort'] = numpy.zeros((Nsurf, maxTwigSize *
                                                 maxTwigSize))
         for s_src in range(Nsurf):
-            M2P_size = surf_array[s_tar].offsetMlt[s_src, len(surf_array[
-                s_tar].twig)]
+            M2P_size = surf_array[s_tar]['offsetMlt'][s_src, len(surf_array[
+                s_tar]['twig'])]
             i = -1
-            for C in surf_array[s_tar].M2P_list[s_src, 0:M2P_size]:
+            for C in surf_array[s_tar]['M2P_list'][s_src, 0:M2P_size]:
                 i += 1
-                surf_array[s_tar].xcSort[s_src, i] = surf_array[s_src].tree[
+                surf_array[s_tar]['xcSort'][s_src, i] = surf_array[s_src]['tree'][
                     C].xc
-                surf_array[s_tar].ycSort[s_src, i] = surf_array[s_src].tree[
+                surf_array[s_tar]['ycSort'][s_src, i] = surf_array[s_src]['tree'][
                     C].yc
-                surf_array[s_tar].zcSort[s_src, i] = surf_array[s_src].tree[
+                surf_array[s_tar]['zcSort'][s_src, i] = surf_array[s_src]['tree'][
                     C].zc
 
 
@@ -706,15 +706,15 @@ def upwardSweep(Cells, CC, PC, P, II, JJ, KK, index, combII, combJJ, combKK,
         combKK, IImii, JJmjj, KKmkk, index_small, index_ptr)
 
 
-def M2P_sort(surfSrc, surfTar, K_aux, V_aux, surf, index, param, LorY, timing):
+def M2P_sort(surf_src, surf_tar, K_aux, V_aux, surf, index, param, LorY, timing):
     """
     It computes the far field contribution of the double and single layer
     potential using the sorted data.
 
     Arguments
     ----------
-    surfSrc: class, source surface, the one that contains the gauss points.
-    surfTar: class, target surface, the one that contains the collocation
+    surf_src: class, source surface, the one that contains the gauss points.
+    surf_tar: class, target surface, the one that contains the collocation
                     points.
     K_aux  : array, far field contribution to the double layer potential.
     V_aux  : array, far field contribution to the single layer potential.
@@ -733,20 +733,20 @@ def M2P_sort(surfSrc, surfTar, K_aux, V_aux, surf, index, param, LorY, timing):
     """
 
     tic = time.time()
-    M2P_size = surfTar.offsetMlt[surf, len(surfTar.twig)]
+    M2P_size = surf_tar.offsetMlt[surf, len(surf_tar.twig)]
     MSort = numpy.zeros(param.Nm * M2P_size)
     MdSort = numpy.zeros(param.Nm * M2P_size)
 
     i = -1
-    for C in surfTar.M2P_list[surf, 0:M2P_size]:
+    for C in surf_tar.M2P_list[surf, 0:M2P_size]:
         i += 1
-        MSort[i * param.Nm:i * param.Nm + param.Nm] = surfSrc.tree[C].M
-        MdSort[i * param.Nm:i * param.Nm + param.Nm] = surfSrc.tree[C].Md
+        MSort[i * param.Nm:i * param.Nm + param.Nm] = surf_src.tree[C].M
+        MdSort[i * param.Nm:i * param.Nm + param.Nm] = surf_src.tree[C].Md
 
-    multipole_sort(K_aux, V_aux, surfTar.offset_target, surfTar.size_target,
-                   surfTar.offsetMlt[surf], MSort, MdSort, surfTar.xiSort,
-                   surfTar.yiSort, surfTar.ziSort, surfTar.xcSort[surf],
-                   surfTar.ycSort[surf], surfTar.zcSort[surf], index, param.P,
+    multipole_sort(K_aux, V_aux, surf_tar.offset_target, surf_tar.size_target,
+                   surf_tar.offsetMlt[surf], MSort, MdSort, surf_tar.xiSort,
+                   surf_tar.yiSort, surf_tar.ziSort, surf_tar.xcSort[surf],
+                   surf_tar.ycSort[surf], surf_tar.zcSort[surf], index, param.P,
                    param.kappa, int(param.Nm), int(LorY))
 
     toc = time.time()
@@ -755,7 +755,7 @@ def M2P_sort(surfSrc, surfTar, K_aux, V_aux, surf, index, param, LorY, timing):
     return K_aux, V_aux
 
 
-def M2PKt_sort(surfSrc, surfTar, Ktx_aux, Kty_aux, Ktz_aux, surf, index, param,
+def M2PKt_sort(surf_src, surf_tar, Ktx_aux, Kty_aux, Ktz_aux, surf, index, param,
                LorY, timing):
     """
     It computes the far field contribution of the adjoint double potential
@@ -763,8 +763,8 @@ def M2PKt_sort(surfSrc, surfTar, Ktx_aux, Kty_aux, Ktz_aux, surf, index, param,
 
     Arguments
     ----------
-    surfSrc: class, source surface, the one that contains the gauss points.
-    surfTar: class, target surface, the one that contains the collocation
+    surf_src: class, source surface, the one that contains the gauss points.
+    surf_tar: class, target surface, the one that contains the collocation
                     points.
     Ktx_aux: array, x component of the far field contribution to the adjoint
                     double layer potential.
@@ -791,20 +791,20 @@ def M2PKt_sort(surfSrc, surfTar, Ktx_aux, Kty_aux, Ktz_aux, surf, index, param,
     """
 
     tic = time.time()
-    M2P_size = surfTar.offsetMlt[surf, len(surfTar.twig)]
+    M2P_size = surf_tar.offsetMlt[surf, len(surf_tar.twig)]
     MSort = numpy.zeros(param.Nm * M2P_size)
     MdSort = numpy.zeros(param.Nm * M2P_size)
 
     i = -1
-    for C in surfTar.M2P_list[surf, 0:M2P_size]:
+    for C in surf_tar.M2P_list[surf, 0:M2P_size]:
         i += 1
-        MSort[i * param.Nm:i * param.Nm + param.Nm] = surfSrc.tree[C].M
+        MSort[i * param.Nm:i * param.Nm + param.Nm] = surf_src.tree[C].M
 
-    multipoleKt_sort(Ktx_aux, Kty_aux, Ktz_aux, surfTar.offset_target,
-                     surfTar.size_target, surfTar.offsetMlt[surf], MSort,
-                     surfTar.xiSort, surfTar.yiSort, surfTar.ziSort,
-                     surfTar.xcSort[surf], surfTar.ycSort[surf],
-                     surfTar.zcSort[surf], index, param.P, param.kappa,
+    multipoleKt_sort(Ktx_aux, Kty_aux, Ktz_aux, surf_tar.offset_target,
+                     surf_tar.size_target, surf_tar.offsetMlt[surf], MSort,
+                     surf_tar.xiSort, surf_tar.yiSort, surf_tar.ziSort,
+                     surf_tar.xcSort[surf], surf_tar.ycSort[surf],
+                     surf_tar.zcSort[surf], index, param.P, param.kappa,
                      int(param.Nm), int(LorY))
 
     toc = time.time()
@@ -813,7 +813,7 @@ def M2PKt_sort(surfSrc, surfTar, Ktx_aux, Kty_aux, Ktz_aux, surf, index, param,
     return Ktx_aux, Kty_aux, Ktz_aux
 
 
-def M2P_gpu(surfSrc, surfTar, K_gpu, V_gpu, surf, ind0, param, LorY, timing,
+def M2P_gpu(surf_src, surf_tar, K_gpu, V_gpu, surf, ind0, param, LorY, timing,
             kernel):
     """
     It computes the far field contribution of the double and single layer
@@ -821,8 +821,8 @@ def M2P_gpu(surfSrc, surfTar, K_gpu, V_gpu, surf, ind0, param, LorY, timing,
 
     Arguments
     ----------
-    surfSrc: class, source surface, the one that contains the gauss points.
-    surfTar: class, target surface, the one that contains the collocation
+    surf_src: class, source surface, the one that contains the gauss points.
+    surf_tar: class, target surface, the one that contains the collocation
                     points.
     K_gpu  : array, far field contribution to the double layer potential.
     V_gpu  : array, far field contribution to the single layer potential.
@@ -850,23 +850,23 @@ def M2P_gpu(surfSrc, surfTar, K_gpu, V_gpu, surf, ind0, param, LorY, timing,
     REAL = param.REAL
 
     tic.record()
-    M2P_size = surfTar.offsetMlt[surf, len(surfTar.twig)]
+    M2P_size = surf_tar.offsetMlt[surf, len(surf_tar.twig)]
     MSort = numpy.zeros(param.Nm * M2P_size)
     MdSort = numpy.zeros(param.Nm * M2P_size)
 
     i = -1
-    for C in surfTar.M2P_list[surf, 0:M2P_size]:
+    for C in surf_tar.M2P_list[surf, 0:M2P_size]:
         i += 1
-        MSort[i * param.Nm:i * param.Nm + param.Nm] = surfSrc.tree[C].M
-        MdSort[i * param.Nm:i * param.Nm + param.Nm] = surfSrc.tree[C].Md
+        MSort[i * param.Nm:i * param.Nm + param.Nm] = surf_src.tree[C].M
+        MdSort[i * param.Nm:i * param.Nm + param.Nm] = surf_src.tree[C].Md
 
     MDev = cuda.to_device(MSort.astype(REAL))
     MdDev = cuda.to_device(MdSort.astype(REAL))
 
     # GPU arrays are flattened, need to point to first element
-    ptr_offset = surf * len(surfTar.offsetTwigs[surf]
+    ptr_offset = surf * len(surf_tar.offset_twigs[surf]
                             )  # Pointer to first element of offset arrays
-    ptr_list = surf * len(surfTar.P2P_list[surf]
+    ptr_list = surf * len(surf_tar.P2P_list[surf]
                           )  # Pointer to first element in lists arrays
 
     GSZ = int(numpy.ceil(float(param.Nround) / param.NCRIT))  # CUDA grid size
@@ -874,16 +874,16 @@ def M2P_gpu(surfSrc, surfTar, K_gpu, V_gpu, surf, ind0, param, LorY, timing,
 
     multipole_gpu(K_gpu,
                   V_gpu,
-                  surfTar.offMltDev,
-                  surfTar.sizeTarDev,
-                  surfTar.xcDev,
-                  surfTar.ycDev,
-                  surfTar.zcDev,
+                  surf_tar.offMltDev,
+                  surf_tar.sizeTarDev,
+                  surf_tar.xcDev,
+                  surf_tar.ycDev,
+                  surf_tar.zcDev,
                   MDev,
                   MdDev,
-                  surfTar.xiDev,
-                  surfTar.yiDev,
-                  surfTar.ziDev,
+                  surf_tar.xiDev,
+                  surf_tar.yiDev,
+                  surf_tar.ziDev,
                   ind0.indexDev,
                   numpy.int32(ptr_offset),
                   numpy.int32(ptr_list),
@@ -901,7 +901,7 @@ def M2P_gpu(surfSrc, surfTar, K_gpu, V_gpu, surf, ind0, param, LorY, timing,
     return K_gpu, V_gpu
 
 
-def M2PKt_gpu(surfSrc, surfTar, Ktx_gpu, Kty_gpu, Ktz_gpu, surf, ind0, param,
+def M2PKt_gpu(surf_src, surf_tar, Ktx_gpu, Kty_gpu, Ktz_gpu, surf, ind0, param,
               LorY, timing, kernel):
     """
     It computes the far field contribution of the adjoint double potential
@@ -909,8 +909,8 @@ def M2PKt_gpu(surfSrc, surfTar, Ktx_gpu, Kty_gpu, Ktz_gpu, surf, ind0, param,
 
     Arguments
     ----------
-    surfSrc: class, source surface, the one that contains the gauss points.
-    surfTar: class, target surface, the one that contains the collocation
+    surf_src: class, source surface, the one that contains the gauss points.
+    surf_tar: class, target surface, the one that contains the collocation
                     points.
     Ktx_gpu: array, x component of the far field contribution to the adjoint
                     double layer potential.
@@ -947,20 +947,20 @@ def M2PKt_gpu(surfSrc, surfTar, Ktx_gpu, Kty_gpu, Ktz_gpu, surf, ind0, param,
     REAL = param.REAL
 
     tic.record()
-    M2P_size = surfTar.offsetMlt[surf, len(surfTar.twig)]
+    M2P_size = surf_tar.offsetMlt[surf, len(surf_tar.twig)]
     MSort = numpy.zeros(param.Nm * M2P_size)
 
     i = -1
-    for C in surfTar.M2P_list[surf, 0:M2P_size]:
+    for C in surf_tar.M2P_list[surf, 0:M2P_size]:
         i += 1
-        MSort[i * param.Nm:i * param.Nm + param.Nm] = surfSrc.tree[C].M
+        MSort[i * param.Nm:i * param.Nm + param.Nm] = surf_src.tree[C].M
 
     MDev = cuda.to_device(MSort.astype(REAL))
 
     # GPU arrays are flattened, need to point to first element
-    ptr_offset = surf * len(surfTar.offsetTwigs[surf]
+    ptr_offset = surf * len(surf_tar.offset_twigs[surf]
                             )  # Pointer to first element of offset arrays
-    ptr_list = surf * len(surfTar.P2P_list[surf]
+    ptr_list = surf * len(surf_tar.P2P_list[surf]
                           )  # Pointer to first element in lists arrays
 
     GSZ = int(numpy.ceil(float(param.Nround) / param.NCRIT))  # CUDA grid size
@@ -969,15 +969,15 @@ def M2PKt_gpu(surfSrc, surfTar, Ktx_gpu, Kty_gpu, Ktz_gpu, surf, ind0, param,
     multipoleKt_gpu(Ktx_gpu,
                     Kty_gpu,
                     Ktz_gpu,
-                    surfTar.offMltDev,
-                    surfTar.sizeTarDev,
-                    surfTar.xcDev,
-                    surfTar.ycDev,
-                    surfTar.zcDev,
+                    surf_tar.offMltDev,
+                    surf_tar.sizeTarDev,
+                    surf_tar.xcDev,
+                    surf_tar.ycDev,
+                    surf_tar.zcDev,
                     MDev,
-                    surfTar.xiDev,
-                    surfTar.yiDev,
-                    surfTar.ziDev,
+                    surf_tar.xiDev,
+                    surf_tar.yiDev,
+                    surf_tar.ziDev,
                     ind0.indexDev,
                     numpy.int32(ptr_offset),
                     numpy.int32(ptr_list),
@@ -995,7 +995,7 @@ def M2PKt_gpu(surfSrc, surfTar, Ktx_gpu, Kty_gpu, Ktz_gpu, surf, ind0, param,
     return Ktx_gpu, Kty_gpu, Ktz_gpu
 
 
-def P2P_sort(surfSrc, surfTar, m, mx, my, mz, mKc, mVc, K_aux, V_aux, surf,
+def P2P_sort(surf_src, surf_tar, m, mx, my, mz, mKc, mVc, K_aux, V_aux, surf,
              LorY, K_diag, V_diag, IorE, L, w, param, timing):
     """
     It computes the near field contribution of the double and single layer
@@ -1010,8 +1010,8 @@ def P2P_sort(surfSrc, surfTar, m, mx, my, mz, mKc, mVc, K_aux, V_aux, surf,
 
     Arguments
     ----------
-    surfSrc: class, source surface, the one that contains the gauss points.
-    surfTar: class, target surface, the one that contains the collocation
+    surf_src: class, source surface, the one that contains the gauss points.
+    surf_tar: class, target surface, the one that contains the collocation
                     points.
     m      : array, mass of the source particle for the single layer potential
                     calculation.
@@ -1047,28 +1047,28 @@ def P2P_sort(surfSrc, surfTar, m, mx, my, mz, mKc, mVc, K_aux, V_aux, surf,
 
     tic = time.time()
 
-    s_xj = surfSrc.xjSort
-    s_yj = surfSrc.yjSort
-    s_zj = surfSrc.zjSort
+    s_xj = surf_src.xjSort
+    s_yj = surf_src.yjSort
+    s_zj = surf_src.zjSort
 
-    xt = surfTar.xiSort
-    yt = surfTar.yiSort
-    zt = surfTar.ziSort
+    xt = surf_tar.xiSort
+    yt = surf_tar.yiSort
+    zt = surf_tar.ziSort
 
-    tri = surfSrc.sort_source / param.K  # Triangle
-    k = surfSrc.sort_source % param.K  # Gauss point
+    tri = surf_src.sort_source / param.K  # Triangle
+    k = surf_src.sort_source % param.K  # Gauss point
 
     aux = numpy.zeros(2)
 
     direct_sort(
         K_aux, V_aux, int(LorY), K_diag, V_diag, int(IorE),
-        numpy.ravel(surfSrc.vertex[surfSrc.triangleSort[:]]), numpy.int32(tri),
-        numpy.int32(k), surfTar.xi, surfTar.yi, surfTar.zi, s_xj, s_yj, s_zj,
-        xt, yt, zt, m, mx, my, mz, mKc, mVc, surfTar.P2P_list[surf],
-        surfTar.offset_target, surfTar.size_target, surfSrc.offset_source,
-        surfTar.offsetTwigs[surf], numpy.int32(surfTar.tree[0].target),
-        surfSrc.AreaSort, surfSrc.sglInt_intSort, surfSrc.sglInt_extSort,
-        surfSrc.xk, surfSrc.wk, surfSrc.Xsk, surfSrc.Wsk, param.kappa,
+        numpy.ravel(surf_src.vertex[surf_src.triangleSort[:]]), numpy.int32(tri),
+        numpy.int32(k), surf_tar.xi, surf_tar.yi, surf_tar.zi, s_xj, s_yj, s_zj,
+        xt, yt, zt, m, mx, my, mz, mKc, mVc, surf_tar.P2P_list[surf],
+        surf_tar.offset_target, surf_tar.size_target, surf_src.offset_source,
+        surf_tar.offset_twigs[surf], numpy.int32(surf_tar.tree[0].target),
+        surf_src.AreaSort, surf_src.sglInt_intSort, surf_src.sglInt_extSort,
+        surf_src.xk, surf_src.wk, surf_src.Xsk, surf_src.Wsk, param.kappa,
         param.threshold, param.eps, w[0], aux)
 
     timing.AI_int += int(aux[0])
@@ -1080,7 +1080,7 @@ def P2P_sort(surfSrc, surfTar, m, mx, my, mz, mKc, mVc, K_aux, V_aux, surf,
     return K_aux, V_aux
 
 
-def P2PKt_sort(surfSrc, surfTar, m, mKc, Ktx_aux, Kty_aux, Ktz_aux, surf, LorY,
+def P2PKt_sort(surf_src, surf_tar, m, mKc, Ktx_aux, Kty_aux, Ktz_aux, surf, LorY,
                w, param, timing):
     """
     It computes the near field contribution of the double and single layer
@@ -1095,8 +1095,8 @@ def P2PKt_sort(surfSrc, surfTar, m, mKc, Ktx_aux, Kty_aux, Ktz_aux, surf, LorY,
 
     Arguments
     ----------
-    surfSrc: class, source surface, the one that contains the gauss points.
-    surfTar: class, target surface, the one that contains the collocation
+    surf_src: class, source surface, the one that contains the gauss points.
+    surf_tar: class, target surface, the one that contains the collocation
                     points.
     m      : array, mass of the source particle for the adjoint double layer
                     potential calculation.
@@ -1127,26 +1127,26 @@ def P2PKt_sort(surfSrc, surfTar, m, mKc, Ktx_aux, Kty_aux, Ktz_aux, surf, LorY,
 
     tic = time.time()
 
-    s_xj = surfSrc.xjSort
-    s_yj = surfSrc.yjSort
-    s_zj = surfSrc.zjSort
+    s_xj = surf_src.xjSort
+    s_yj = surf_src.yjSort
+    s_zj = surf_src.zjSort
 
-    xt = surfTar.xiSort
-    yt = surfTar.yiSort
-    zt = surfTar.ziSort
+    xt = surf_tar.xiSort
+    yt = surf_tar.yiSort
+    zt = surf_tar.ziSort
 
-    tri = surfSrc.sort_source / param.K  # Triangle
-    k = surfSrc.sort_source % param.K  # Gauss point
+    tri = surf_src.sort_source / param.K  # Triangle
+    k = surf_src.sort_source % param.K  # Gauss point
 
     aux = numpy.zeros(2)
 
     directKt_sort(Ktx_aux, Kty_aux, Ktz_aux, int(LorY),
-                  numpy.ravel(surfSrc.vertex[surfSrc.triangleSort[:]]),
+                  numpy.ravel(surf_src.vertex[surf_src.triangleSort[:]]),
                   numpy.int32(k), s_xj, s_yj, s_zj, xt, yt, zt, m, mKc,
-                  surfTar.P2P_list[surf], surfTar.offset_target,
-                  surfTar.size_target, surfSrc.offset_source,
-                  surfTar.offsetTwigs[surf], surfSrc.AreaSort, surfSrc.Xsk,
-                  surfSrc.Wsk, param.kappa, param.threshold, param.eps, aux)
+                  surf_tar.P2P_list[surf], surf_tar.offset_target,
+                  surf_tar.size_target, surf_src.offset_source,
+                  surf_tar.offset_twigs[surf], surf_src.AreaSort, surf_src.Xsk,
+                  surf_src.Wsk, param.kappa, param.threshold, param.eps, aux)
 
     timing.AI_int += int(aux[0])
     timing.time_an += aux[1]
@@ -1157,7 +1157,7 @@ def P2PKt_sort(surfSrc, surfTar, m, mKc, Ktx_aux, Kty_aux, Ktz_aux, surf, LorY,
     return Ktx_aux, Kty_aux, Ktz_aux
 
 
-def P2P_gpu(surfSrc, surfTar, m, mx, my, mz, mKc, mVc, K_gpu, V_gpu, surf,
+def P2P_gpu(surf_src, surf_tar, m, mx, my, mz, mKc, mVc, K_gpu, V_gpu, surf,
             LorY, K_diag, IorE, L, w, param, timing, kernel):
     """
     It computes the near field contribution of the double and single layer
@@ -1172,8 +1172,8 @@ def P2P_gpu(surfSrc, surfTar, m, mx, my, mz, mKc, mVc, K_gpu, V_gpu, surf,
 
     Arguments
     ----------
-    surfSrc: class, source surface, the one that contains the gauss points.
-    surfTar: class, target surface, the one that contains the collocation
+    surf_src: class, source surface, the one that contains the gauss points.
+    surf_tar: class, target surface, the one that contains the collocation
                     points.
     m      : array, mass of the source particle for the single layer potential
                     calculation.
@@ -1232,39 +1232,39 @@ def P2P_gpu(surfSrc, surfTar, m, mx, my, mz, mKc, mVc, K_gpu, V_gpu, surf,
     AI_int = cuda.to_device(numpy.zeros(param.Nround, dtype=numpy.int32))
 
     # GPU arrays are flattened, need to point to first element
-    ptr_offset = surf * len(surfTar.offsetTwigs[surf]
+    ptr_offset = surf * len(surf_tar.offset_twigs[surf]
                             )  # Pointer to first element of offset arrays
-    ptr_list = surf * len(surfTar.P2P_list[surf]
+    ptr_list = surf * len(surf_tar.P2P_list[surf]
                           )  # Pointer to first element in lists arrays
 
     # Check if internal or external to send correct singular integral
     if IorE == 1:
-        sglInt = surfSrc.sglInt_intDev
+        sglInt = surf_src.sglInt_intDev
     else:
-        sglInt = surfSrc.sglInt_extDev
+        sglInt = surf_src.sglInt_extDev
 
     direct_gpu(K_gpu,
                V_gpu,
-               surfSrc.offSrcDev,
-               surfTar.offTwgDev,
-               surfTar.P2P_lstDev,
-               surfTar.sizeTarDev,
-               surfSrc.kDev,
-               surfSrc.xjDev,
-               surfSrc.yjDev,
-               surfSrc.zjDev,
+               surf_src.offSrcDev,
+               surf_tar.offTwgDev,
+               surf_tar.P2P_lstDev,
+               surf_tar.sizeTarDev,
+               surf_src.kDev,
+               surf_src.xjDev,
+               surf_src.yjDev,
+               surf_src.zjDev,
                mDev,
                mxDev,
                myDev,
                mzDev,
                mKcDev,
                mVcDev,
-               surfTar.xiDev,
-               surfTar.yiDev,
-               surfTar.ziDev,
-               surfSrc.AreaDev,
+               surf_tar.xiDev,
+               surf_tar.yiDev,
+               surf_tar.ziDev,
+               surf_src.AreaDev,
                sglInt,
-               surfSrc.vertexDev,
+               surf_src.vertexDev,
                numpy.int32(ptr_offset),
                numpy.int32(ptr_list),
                numpy.int32(LorY),
@@ -1274,8 +1274,8 @@ def P2P_gpu(surfSrc, surfTar, m, mx, my, mz, mKc, mVc, K_gpu, V_gpu, surf,
                numpy.int32(param.NCRIT),
                REAL(K_diag),
                AI_int,
-               surfSrc.XskDev,
-               surfSrc.WskDev,
+               surf_src.XskDev,
+               surf_src.WskDev,
                block=(param.BSZ, 1, 1),
                grid=(GSZ, 1))
 
@@ -1286,7 +1286,7 @@ def P2P_gpu(surfSrc, surfTar, m, mx, my, mz, mKc, mVc, K_gpu, V_gpu, surf,
     tic.record()
     AI_aux = numpy.zeros(param.Nround, dtype=numpy.int32)
     AI_aux = cuda.from_device(AI_int, param.Nround, dtype=numpy.int32)
-    timing.AI_int += sum(AI_aux[surfTar.unsort])
+    timing.AI_int += sum(AI_aux[surf_tar.unsort])
     toc.record()
     toc.synchronize()
     timing.time_trans += tic.time_till(toc) * 1e-3
@@ -1294,7 +1294,7 @@ def P2P_gpu(surfSrc, surfTar, m, mx, my, mz, mKc, mVc, K_gpu, V_gpu, surf,
     return K_gpu, V_gpu
 
 
-def P2PKt_gpu(surfSrc, surfTar, m, mKtc, Ktx_gpu, Kty_gpu, Ktz_gpu, surf, LorY,
+def P2PKt_gpu(surf_src, surf_tar, m, mKtc, Ktx_gpu, Kty_gpu, Ktz_gpu, surf, LorY,
               w, param, timing, kernel):
     """
     It computes the near field contribution of the double and single layer
@@ -1309,8 +1309,8 @@ def P2PKt_gpu(surfSrc, surfTar, m, mKtc, Ktx_gpu, Kty_gpu, Ktz_gpu, surf, LorY,
 
     Arguments
     ----------
-    surfSrc: class, source surface, the one that contains the gauss points.
-    surfTar: class, target surface, the one that contains the collocation
+    surf_src: class, source surface, the one that contains the gauss points.
+    surf_tar: class, target surface, the one that contains the collocation
                     points.
     m      : array, mass of the source particle for the adjoint double layer
                     potential calculation.
@@ -1361,29 +1361,29 @@ def P2PKt_gpu(surfSrc, surfTar, m, mKtc, Ktx_gpu, Kty_gpu, Ktz_gpu, surf, LorY,
     AI_int = cuda.to_device(numpy.zeros(param.Nround, dtype=numpy.int32))
 
     # GPU arrays are flattened, need to point to first element
-    ptr_offset = surf * len(surfTar.offsetTwigs[surf]
+    ptr_offset = surf * len(surf_tar.offset_twigs[surf]
                             )  # Pointer to first element of offset arrays
-    ptr_list = surf * len(surfTar.P2P_list[surf]
+    ptr_list = surf * len(surf_tar.P2P_list[surf]
                           )  # Pointer to first element in lists arrays
 
     directKt_gpu(Ktx_gpu,
                  Kty_gpu,
                  Ktz_gpu,
-                 surfSrc.offSrcDev,
-                 surfTar.offTwgDev,
-                 surfTar.P2P_lstDev,
-                 surfTar.sizeTarDev,
-                 surfSrc.kDev,
-                 surfSrc.xjDev,
-                 surfSrc.yjDev,
-                 surfSrc.zjDev,
+                 surf_src.offSrcDev,
+                 surf_tar.offTwgDev,
+                 surf_tar.P2P_lstDev,
+                 surf_tar.sizeTarDev,
+                 surf_src.kDev,
+                 surf_src.xjDev,
+                 surf_src.yjDev,
+                 surf_src.zjDev,
                  mDev,
                  mKtcDev,
-                 surfTar.xiDev,
-                 surfTar.yiDev,
-                 surfTar.ziDev,
-                 surfSrc.AreaDev,
-                 surfSrc.vertexDev,
+                 surf_tar.xiDev,
+                 surf_tar.yiDev,
+                 surf_tar.ziDev,
+                 surf_src.AreaDev,
+                 surf_src.vertexDev,
                  numpy.int32(ptr_offset),
                  numpy.int32(ptr_list),
                  numpy.int32(LorY),
@@ -1392,8 +1392,8 @@ def P2PKt_gpu(surfSrc, surfTar, m, mKtc, Ktx_gpu, Kty_gpu, Ktz_gpu, surf, LorY,
                  numpy.int32(param.BlocksPerTwig),
                  numpy.int32(param.NCRIT),
                  AI_int,
-                 surfSrc.XskDev,
-                 surfSrc.WskDev,
+                 surf_src.XskDev,
+                 surf_src.WskDev,
                  block=(param.BSZ, 1, 1),
                  grid=(GSZ, 1))
 
@@ -1404,7 +1404,7 @@ def P2PKt_gpu(surfSrc, surfTar, m, mKtc, Ktx_gpu, Kty_gpu, Ktz_gpu, surf, LorY,
     tic.record()
     AI_aux = numpy.zeros(param.Nround, dtype=numpy.int32)
     AI_aux = cuda.from_device(AI_int, param.Nround, dtype=numpy.int32)
-    timing.AI_int += sum(AI_aux[surfTar.unsort])
+    timing.AI_int += sum(AI_aux[surf_tar.unsort])
     toc.record()
     toc.synchronize()
     timing.time_trans += tic.time_till(toc) * 1e-3
