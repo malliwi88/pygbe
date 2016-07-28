@@ -154,15 +154,13 @@ def split_cell(x, y, z, Cells, C, NCRIT, Nm, Ncell):
     return Ncell
 
 
-def generateTree(xi, yi, zi, NCRIT, Nm, N, radius, x_center):
+def generateTree(coll_coords, NCRIT, Nm, N, radius, x_center):
     """
-    It generates a target-based tree.
+    Generate a target-based tree.
 
     Arguments
     ----------
-    xi      : array, x position of the targets, i.e collocation points.
-    yi      : array, y position of the targets, i.e collocation points.
-    zi      : array, z position of the targets, i.e collocation points.
+    coll_coords : array, (x, y, z) position of the targets (collocation points)
     NCRIT   : int, maximum number of boundary elements per twig box of tree
                    structure.
     Nm      : int, number of multipole coefficients.
@@ -174,10 +172,10 @@ def generateTree(xi, yi, zi, NCRIT, Nm, N, radius, x_center):
     Cells   : array, cells of the tree.
     """
 
+    xi, yi, zi = coll_coords[:, 0], coll_coords[:, 1], coll_coords[:, 2]
+
     C0 = Cell(NCRIT, Nm)
-    C0.xc = x_center[0]
-    C0.yc = x_center[1]
-    C0.zc = x_center[2]
+    C0.xc, C0.yc, C0.zc = x_center
     C0.r = radius
 
     Cells = [Cell(NCRIT, Nm)] * N
@@ -356,37 +354,38 @@ def sortPoints(surface, Cells, twig, param):
 
     Nround = len(twig) * param.NCRIT
 
-    surface.sortTarget = numpy.zeros(Nround, dtype=numpy.int32)
-    surface.unsort = numpy.zeros(len(surface.xi), dtype=numpy.int32)
-    surface.sortSource = numpy.zeros(len(surface.xj), dtype=numpy.int32)
-    surface.offsetSource = numpy.zeros(len(twig) + 1, dtype=numpy.int32)
-    surface.offsetTarget = numpy.zeros(len(twig), dtype=numpy.int32)
-    surface.sizeTarget = numpy.zeros(len(twig), dtype=numpy.int32)
+    surface['sortTarget'] = numpy.zeros(Nround, dtype=numpy.int32)
+    surface['unsort'] = numpy.zeros(len(surface['xi']), dtype=numpy.int32)
+    surface['sortSource'] = numpy.zeros(len(surface['xj']), dtype=numpy.int32)
+    surface['offsetSource'] = numpy.zeros(len(twig) + 1, dtype=numpy.int32)
+    surface['offsetTarget'] = numpy.zeros(len(twig), dtype=numpy.int32)
+    surface['sizeTarget'] = numpy.zeros(len(twig), dtype=numpy.int32)
     offTar = 0
     offSrc = 0
     i = 0
     for C in twig:
-        surface.sortTarget[param.NCRIT * i:param.NCRIT * i + Cells[
+        surface['sortTarget'][param.NCRIT * i:param.NCRIT * i + Cells[
             C].ntarget] = Cells[C].target
-        surface.unsort[Cells[C].target] = range(
+        surface['unsort'][Cells[C].target] = range(
             param.NCRIT * i, param.NCRIT * i + Cells[C].ntarget)
-        surface.sortSource[offSrc:offSrc + Cells[C].nsource] = Cells[C].source
+        surface['sortSource'][offSrc:offSrc + Cells[C].nsource] = Cells[C].source
         offSrc += Cells[C].nsource
-        surface.offsetSource[i + 1] = offSrc
-        surface.offsetTarget[i] = i * param.NCRIT
-        surface.sizeTarget[i] = Cells[C].ntarget
+        surface['offsetSource'][i + 1] = offSrc
+        surface['offsetTarget'][i] = i * param.NCRIT
+        surface['sizeTarget'][i] = Cells[C].ntarget
         i += 1
 
-    surface.xiSort = surface.xi[surface.sortTarget]
-    surface.yiSort = surface.yi[surface.sortTarget]
-    surface.ziSort = surface.zi[surface.sortTarget]
-    surface.xjSort = surface.xj[surface.sortSource]
-    surface.yjSort = surface.yj[surface.sortSource]
-    surface.zjSort = surface.zj[surface.sortSource]
-    surface.AreaSort = surface.Area[surface.sortSource // param.K]
-    surface.sglInt_intSort = surface.sglInt_int[surface.sortSource // param.K]
-    surface.sglInt_extSort = surface.sglInt_ext[surface.sortSource // param.K]
-    surface.triangleSort = surface.triangle[surface.sortSource // param.K]
+    import ipdb; ipdb.set_trace()
+    surface['xiSort'] = surface['xi'][surface['sortTarget']]
+    surface['yiSort'] = surface['yi'][surface['sortTarget']]
+    surface['ziSort'] = surface['zi'][surface['sortTarget']]
+    surface['xjSort'] = surface['xj'][surface['sortSource']]
+    surface['yjSort'] = surface['yj'][surface['sortSource']]
+    surface['zjSort'] = surface['zj'][surface['sortSource']]
+    surface['AreaSort'] = surface['Area'][surface['sortSource'] // param.K]
+    surface['sglInt_intSort'] = surface['sglInt_int'][surface['sortSource'] // param.K]
+    surface['sglInt_extSort'] = surface['sglInt_ext'][surface['sortSource'] // param.K]
+    surface['triangleSort'] = surface['triangle'][surface['sortSource'] // param.K]
 
 
 def computeIndices(P, ind0):
