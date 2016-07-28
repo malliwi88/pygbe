@@ -28,7 +28,7 @@ def print_summary(surf_array, field_array, param, results_dict):
 
         print('Surface {}:'.format(i))
         print('\t{} elements'.format(N_aux))
-        print('\tSurface type       : {}'.format(surf_array[i]['surf']_type))
+        print('\tSurface type       : {}'.format(surf_array[i]['surf_type']))
         print('\tCells              : {}'.format(len(surf_array[i]['tree'])))
         print('\tTwigs              : {}'.format(len(surf_array[i]['twig'])))
         print('\tLevels             : {}'.format(Levels))
