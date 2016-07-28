@@ -24,7 +24,7 @@ from pygbe.matrixfree import (generateRHS, generateRHS_gpu, calculateEsolv,
                         coulombEnergy, calculateEsurf)
 
 from pygbe.util.readData import readParameters
-from pygbe.tree.FMMutils import computeIndices, precomputeTerms, generateList
+from pygbe.tree.FMMutils import computeIndices, precomputeTerms, generate_list
 
 try:
     from pygbe.tree.cuda_kernels import kernels
@@ -313,7 +313,7 @@ def main(argv=sys.argv, log_output=True, return_output_fname=False):
     ### Generate interaction list
     print('Generate interaction list')
     tic = time.time()
-    generateList(surf_array, field_array, param)
+    generate_list(surf_array, field_array, param)
     toc = time.time()
     list_time = toc - tic
 
