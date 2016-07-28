@@ -530,4 +530,5 @@ def getGaussPoints(y, triangle, n):
             xi[n*i+5,:] = numpy.dot(M, numpy.array([.470142064105115,.059715871789770,.470142064105115]))
             xi[n*i+6,:] = numpy.dot(M, numpy.array([.470142064105115,.470142064105115,.059715871789770]))
 
-    return xi[:,0], xi[:,1], xi[:,2]
+#    return xi[:,0], xi[:,1], xi[:,2]
+    return xi
