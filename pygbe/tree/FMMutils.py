@@ -383,8 +383,8 @@ def sort_points(surface, Cells, twig, param):
    # surface['xjSort'] = surface['xj'][surface['sort_source']]
    # surface['yjSort'] = surface['yj'][surface['sort_source']]
    # surface['zjSort'] = surface['zj'][surface['sort_source']]
-    surface['center_coord_sort'] = surface['center_coords'][surface['sort_target']]
-    surface['gauss_coord_sort'] = surface['gauss_coords'][surface['sort_target']]
+    surface['center_coords_sort'] = surface['center_coords'][surface['sort_target']]
+    surface['gauss_coords_sort'] = surface['gauss_coords'][surface['sort_target']]
     surface['area_sort'] = surface['area'][surface['sort_source'] // param.K]
     surface['sglInt_intSort'] = surface['sglInt_int'][surface['sort_source'] // param.K]
     surface['sglInt_extSort'] = surface['sglInt_ext'][surface['sort_source'] // param.K]
@@ -594,11 +594,11 @@ def generate_list(surf_array, field_array, param):
             ii += 1
 
     for s_tar in range(Nsurf):
-        surf_array[s_tar]['xcSort'] = numpy.zeros((Nsurf, maxTwigSize *
+        surf_array[s_tar]['xc_sort'] = numpy.zeros((Nsurf, maxTwigSize *
                                                     maxTwigSize))
-        surf_array[s_tar]['ycSort'] = numpy.zeros((Nsurf, maxTwigSize *
+        surf_array[s_tar]['yc_sort'] = numpy.zeros((Nsurf, maxTwigSize *
                                                     maxTwigSize))
-        surf_array[s_tar]['zcSort'] = numpy.zeros((Nsurf, maxTwigSize *
+        surf_array[s_tar]['zc_sort'] = numpy.zeros((Nsurf, maxTwigSize *
                                                 maxTwigSize))
         for s_src in range(Nsurf):
             M2P_size = surf_array[s_tar]['offsetMlt'][s_src, len(surf_array[
@@ -606,11 +606,11 @@ def generate_list(surf_array, field_array, param):
             i = -1
             for C in surf_array[s_tar]['M2P_list'][s_src, 0:M2P_size]:
                 i += 1
-                surf_array[s_tar]['xcSort'][s_src, i] = surf_array[s_src]['tree'][
+                surf_array[s_tar]['xc_sort'][s_src, i] = surf_array[s_src]['tree'][
                     C].xc
-                surf_array[s_tar]['ycSort'][s_src, i] = surf_array[s_src]['tree'][
+                surf_array[s_tar]['yc_sort'][s_src, i] = surf_array[s_src]['tree'][
                     C].yc
-                surf_array[s_tar]['zcSort'][s_src, i] = surf_array[s_src]['tree'][
+                surf_array[s_tar]['zc_sort'][s_src, i] = surf_array[s_src]['tree'][
                     C].zc
 
 
@@ -745,8 +745,8 @@ def M2P_sort(surf_src, surf_tar, K_aux, V_aux, surf, index, param, LorY, timing)
 
     multipole_sort(K_aux, V_aux, surf_tar.offset_target, surf_tar.size_target,
                    surf_tar.offsetMlt[surf], MSort, MdSort, surf_tar.xiSort,
-                   surf_tar.yiSort, surf_tar.ziSort, surf_tar.xcSort[surf],
-                   surf_tar.ycSort[surf], surf_tar.zcSort[surf], index, param.P,
+                   surf_tar.yiSort, surf_tar.ziSort, surf_tar.xc_sort[surf],
+                   surf_tar.yc_sort[surf], surf_tar.zc_sort[surf], index, param.P,
                    param.kappa, int(param.Nm), int(LorY))
 
     toc = time.time()
@@ -803,8 +803,8 @@ def M2PKt_sort(surf_src, surf_tar, Ktx_aux, Kty_aux, Ktz_aux, surf, index, param
     multipoleKt_sort(Ktx_aux, Kty_aux, Ktz_aux, surf_tar.offset_target,
                      surf_tar.size_target, surf_tar.offsetMlt[surf], MSort,
                      surf_tar.xiSort, surf_tar.yiSort, surf_tar.ziSort,
-                     surf_tar.xcSort[surf], surf_tar.ycSort[surf],
-                     surf_tar.zcSort[surf], index, param.P, param.kappa,
+                     surf_tar.xc_sort[surf], surf_tar.yc_sort[surf],
+                     surf_tar.zc_sort[surf], index, param.P, param.kappa,
                      int(param.Nm), int(LorY))
 
     toc = time.time()
@@ -1067,7 +1067,7 @@ def P2P_sort(surf_src, surf_tar, m, mx, my, mz, mKc, mVc, K_aux, V_aux, surf,
         xt, yt, zt, m, mx, my, mz, mKc, mVc, surf_tar.P2P_list[surf],
         surf_tar.offset_target, surf_tar.size_target, surf_src.offset_source,
         surf_tar.offset_twigs[surf], numpy.int32(surf_tar.tree[0].target),
-        surf_src.AreaSort, surf_src.sglInt_intSort, surf_src.sglInt_extSort,
+        surf_src['area_sort'], surf_src.sglInt_intSort, surf_src.sglInt_extSort,
         surf_src.xk, surf_src.wk, surf_src.Xsk, surf_src.Wsk, param.kappa,
         param.threshold, param.eps, w[0], aux)
 

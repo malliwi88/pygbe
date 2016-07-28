@@ -17,7 +17,7 @@ from argparse import ArgumentParser
 # Import self made modules
 from pygbe.gmres import gmres_mgs
 from pygbe.classes import Timing, Parameters, IndexConstant
-from pygbe.gpuio import dataTransfer
+from pygbe.gpuio import data_transfer
 from pygbe.surface import initializeSurf, fill_surface, initializeField, fill_phi
 from pygbe.output import print_summary
 from pygbe.matrixfree import (generateRHS, generateRHS_gpu, calculateEsolv,
@@ -317,11 +317,13 @@ def main(argv=sys.argv, log_output=True, return_output_fname=False):
     toc = time.time()
     list_time = toc - tic
 
+    ### Create device variables dictionary
+    d_surf_array = numpy.empty_like(surf_array)
     ### Transfer data to GPU
     print('Transfer data to GPU')
     tic = time.time()
     if param.GPU == 1:
-        dataTransfer(surf_array, field_array, ind0, param, kernel)
+        data_transfer(surf_array, d_surf_array, field_array, ind0, param, kernel)
     toc = time.time()
     transfer_time = toc - tic
 
