@@ -20,30 +20,30 @@ def print_summary(surf_array, field_array, param, results_dict):
     print(28 * '-' + '\n')
     print('{} surfaces:\n'.format(Nsurf))
     for i in range(len(surf_array)):
-        N_aux = len(surf_array[i].triangle)
-        rr = numpy.zeros(len(surf_array[i].tree))
-        for ii in range(len(surf_array[i].tree)):
-            rr[ii] = surf_array[i].tree[ii].r
-        Levels = int(numpy.log(surf_array[i].tree[0].r/numpy.min(rr))/numpy.log(2) + 1)
+        N_aux = len(surf_array[i]['triangle'])
+        rr = numpy.zeros(len(surf_array[i]['tree']))
+        for ii in range(len(surf_array[i]['tree'])):
+            rr[ii] = surf_array[i]['tree'][ii].r
+        Levels = int(numpy.log(surf_array[i]['tree'][0].r/numpy.min(rr))/numpy.log(2) + 1)
 
         print('Surface {}:'.format(i))
         print('\t{} elements'.format(N_aux))
-        print('\tSurface type       : {}'.format(surf_array[i].surf_type))
-        print('\tCells              : {}'.format(len(surf_array[i].tree)))
-        print('\tTwigs              : {}'.format(len(surf_array[i].twig)))
+        print('\tSurface type       : {}'.format(surf_array[i]['surf']_type))
+        print('\tCells              : {}'.format(len(surf_array[i]['tree'])))
+        print('\tTwigs              : {}'.format(len(surf_array[i]['twig'])))
         print('\tLevels             : {}'.format(Levels))
-        print('\tC0 size            : {}'.format(surf_array[i].tree[0].r))
-        print('\tC0 box center      : {}, {}, {}'.format(surf_array[i].tree[0].xc,
-                                                         surf_array[i].tree[0].yc,
-                                                         surf_array[i].tree[0].zc))
+        print('\tC0 size            : {}'.format(surf_array[i]['tree'][0].r))
+        print('\tC0 box center      : {}, {}, {}'.format(surf_array[i]['tree'][0].xc,
+                                                         surf_array[i]['tree'][0].yc,
+                                                         surf_array[i]['tree'][0].zc))
         print('\tTwig cell size     : {}'.format(numpy.min(rr)))
         print('\tRbox/theta         : {}'.format(numpy.min(rr)/param.theta))
-        print('\tAnalytic distance  : {}'.format(numpy.average(numpy.sqrt(2*surf_array[i].Area))/param.threshold))
-        print('\tElem. per sq Ang   : {}'.format(1/numpy.average(surf_array[i].Area)))
-        print('\tMax, min, avg elem.: {}, {}, {}'.format(numpy.max(surf_array[i].Area),
-                                                         numpy.min(surf_array[i].Area),
-                                                         numpy.average(surf_array[i].Area)))
-        print('\tTotal area         : {}'.format(numpy.sum(surf_array[i].Area)))
+        print('\tAnalytic distance  : {}'.format(numpy.average(numpy.sqrt(2*surf_array[i]['area']))/param.threshold))
+        print('\tElem. per sq Ang   : {}'.format(1/numpy.average(surf_array[i]['area'])))
+        print('\tMax, min, avg elem.: {}, {}, {}'.format(numpy.max(surf_array[i]['area']),
+                                                         numpy.min(surf_array[i]['area']),
+                                                         numpy.average(surf_array[i]['area'])))
+        print('\tTotal Area         : {}'.format(numpy.sum(surf_array[i]['area'])))
 
     print(30*'-'+'\n')
 
@@ -78,7 +78,7 @@ def print_summary(surf_array, field_array, param, results_dict):
     print(28*'-'+'\n')
     try:
         key = 'elem_sq_angstrom_surf{}'.format(i)
-        results_dict[key] = [1/numpy.average(surf_array[i].Area)]
+        results_dict[key] = [1/numpy.average(surf_array[i].area)]
     except IndexError:
         pass
 
