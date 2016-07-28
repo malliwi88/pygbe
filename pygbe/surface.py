@@ -164,20 +164,21 @@ def fill_surface(surf, param):
 #    surf.xj, surf.yj, surf.zj = getGaussPoints(surf.vertex, surf.triangle,
 #                                               param.K)
 
-    xcenter = numpy.average(surf['center_coords'], axis=0)
+    x_center = numpy.average(surf['center_coords'], axis=0)
 #    x_center = numpy.zeros(3)
 #    x_center[0] = numpy.average(surf.xi).astype(param.REAL)
 #    x_center[1] = numpy.average(surf.yi).astype(param.REAL)
 #    x_center[2] = numpy.average(surf.zi).astype(param.REAL)
 #    dist = numpy.sqrt((surf.xi - x_center[0])**2 + (surf.yi - x_center[1])**2 +
 #                      (surf.zi - x_center[2])**2)
-    R_C0 = numpy.sqrt(((surf['center_coords'] - xcenter)**2).sum(axis=1)).max()
+    R_C0 = numpy.sqrt(((surf['center_coords'] - x_center)**2).sum(axis=1)).max()
 
     # Generate tree, compute indices and precompute terms for M2M
     surf['tree'] = generateTree(surf['center_coords'], param.NCRIT, param.Nm,
                              N, R_C0, x_center)
     C = 0
-    surf['twig'] = findTwigs(surf['tree'], C, surf['twig'], param.NCRIT)
+#    surf['twig'] = findTwigs(surf['tree'], C, surf['twig'], param.NCRIT)
+    surf['twig'] = findTwigs(surf['tree'], C, [], param.NCRIT)
 
     addSources(surf['tree'], surf['twig'], param.K)
 
@@ -191,6 +192,7 @@ def fill_surface(surf, param):
 #    centers[:, 1] = surf.yi[:]
 #    centers[:, 2] = surf.zi[:]
 
+    centers = surf['center_coords']
     #   Compute diagonal integral for internal equation
     VL = numpy.zeros(N)
     KL = numpy.zeros(N)
@@ -251,7 +253,7 @@ def fill_surface(surf, param):
         surf['Precond'][0, :] = 1 / (2 * numpy.pi)
 
     tic = time.time()
-    sortPoints(surf, surf['tree'], surf['twig'], param)
+    sort_points(surf, surf['tree'], surf['twig'], param)
     toc = time.time()
     time_sort = toc - tic
 
