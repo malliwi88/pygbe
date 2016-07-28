@@ -54,7 +54,7 @@ def initializeSurf(field_array, filename, param):
         triangle_raw = readTriangle(files[i] + '.face', s['surf_type'])
         toc = time.time()
         print('Time load mesh: {}'.format(toc - tic))
-        Area_null = zeroAreas(s, triangle_raw, Area_null)
+        Area_null = zero_areas(s, triangle_raw, Area_null)
         s['triangle'] = numpy.delete(triangle_raw, Area_null, 0)
         print('Removed areas=0: {}'.format(len(Area_null)))
 
@@ -80,7 +80,7 @@ def initializeSurf(field_array, filename, param):
     return surf_array
 
 
-def zeroAreas(s, triangle_raw, Area_null):
+def zero_areas(s, triangle_raw, Area_null):
     """
     Looks for "zero-areas", areas that are really small, almost zero. It appends
     them to Area_null list.
@@ -97,8 +97,8 @@ def zeroAreas(s, triangle_raw, Area_null):
     """
 
     for i in range(len(triangle_raw)):
-        L0 = s.vertex[triangle_raw[i, 1]] - s.vertex[triangle_raw[i, 0]]
-        L2 = s.vertex[triangle_raw[i, 0]] - s.vertex[triangle_raw[i, 2]]
+        L0 = s['vertex'][triangle_raw[i, 1]] - s['vertex'][triangle_raw[i, 0]]
+        L2 = s['vertex'][triangle_raw[i, 0]] - s['vertex'][triangle_raw[i, 2]]
         normal_aux = numpy.cross(L0, L2)
         Area_aux = linalg.norm(normal_aux) / 2
         if Area_aux < 1e-10:
@@ -126,133 +126,180 @@ def fill_surface(surf, param):
     time_sort: float, time spent in sorting the data needed for the treecode.
     """
 
-    N = len(surf.triangle)
+    N = len(surf['triangle'])
     Nj = N * param.K
     # Calculate centers
-    surf.center_coords = numpy.average(surf.vertex[surf.triangle[:], :], axis=1)
+    surf['center_coords'] = numpy.average(surf['vertex'][surf['triangle'][:], :], axis=1)
 #    surf.center_coords = dict(zip(keys, [_coords[:,0], _coords[:, 1], _coords[:,2]]))
 #    surf.center_coords['x'] = numpy.average(surf.vertex[surf.triangle[:], 0], axis=1)
 #    surf.center_coords['y'] = numpy.average(surf.vertex[surf.triangle[:], 1], axis=1)
 #    surf.center_coords['z'] = numpy.average(surf.vertex[surf.triangle[:], 2], axis=1)
-    import ipdb; ipdb.set_trace()
 
-    surf.normal = numpy.zeros((N, 3))
-    surf.Area = numpy.zeros((N, 1))
+#    surf['normal'] = numpy.zeros((N, 3))
+#    surf['area'] = numpy.zeros((N, 1))
 
-    L0 = surf.vertex[surf.triangle[:, 1]] - surf.vertex[surf.triangle[:, 0]]
-    L2 = surf.vertex[surf.triangle[:, 0]] - surf.vertex[surf.triangle[:, 2]]
-    surf.normal = numpy.cross(L0, L2)
-    surf.Area[:,0] = numpy.sqrt((surf.normal**2)).sum(axis=1) / 2
+    L0 = surf['vertex'][surf['triangle'][:, 1]] - surf['vertex'][surf['triangle'][:, 0]]
+    L2 = surf['vertex'][surf['triangle'][:, 0]] - surf['vertex'][surf['triangle'][:, 2]]
+    surf['normal'] = numpy.cross(L0, L2)
+    surf['area'] = numpy.sqrt((surf['normal']**2).sum(axis=1)) / 2
+#    surf['area'] = surf['area'].reshape(surf['area'].shape[0], -1)
 #    numpy.sqrt(surf.normal[:, 0]**2 + surf.normal[:, 1]**2 +
-#                           surf.normal[:, 2]**2) / 2
+#                           surf['normal'][:, 2]**2) / 2
 
-    surf.normal = surf.normal / (2 * surf.Area)
+    #newaxis adds a dimension to an existing array (so (n,) -> (n, 1))
+    surf['normal'] = surf['normal'] / (2 * surf['area'][:, numpy.newaxis])
 #    surf.normal[:, 0] = surf.normal[:, 0] / (2 * surf.Area)
 #    surf.normal[:, 1] = surf.normal[:, 1] / (2 * surf.Area)
 #    surf.normal[:, 2] = surf.normal[:, 2] / (2 * surf.Area)
 
     # Set Gauss points (sources)
-    surf.gauss_coords = dict(zip(keys,
-                                 getGaussPoints(surf.vertex,
-                                                surf.triangle,
-                                                param.K)))
+    surf['gauss_coords'] = getGaussPoints(surf['vertex'],
+                                          surf['triangle'],
+                                          param.K)
+
+   # dict(zip(keys,
+   #                              getGaussPoints(surf.vertex,
+   #                                             surf.triangle,
+   #                                             param.K)))
 #    surf.xj, surf.yj, surf.zj = getGaussPoints(surf.vertex, surf.triangle,
 #                                               param.K)
 
-    import ipdb; ipdb.set_trace()
-    x_center = numpy.zeros(3)
-    x_center[0] = numpy.average(surf.xi).astype(param.REAL)
-    x_center[1] = numpy.average(surf.yi).astype(param.REAL)
-    x_center[2] = numpy.average(surf.zi).astype(param.REAL)
-    dist = numpy.sqrt((surf.xi - x_center[0])**2 + (surf.yi - x_center[1])**2 +
-                      (surf.zi - x_center[2])**2)
-    R_C0 = max(dist)
+    xcenter = numpy.average(surf['center_coords'], axis=0)
+#    x_center = numpy.zeros(3)
+#    x_center[0] = numpy.average(surf.xi).astype(param.REAL)
+#    x_center[1] = numpy.average(surf.yi).astype(param.REAL)
+#    x_center[2] = numpy.average(surf.zi).astype(param.REAL)
+#    dist = numpy.sqrt((surf.xi - x_center[0])**2 + (surf.yi - x_center[1])**2 +
+#                      (surf.zi - x_center[2])**2)
+    R_C0 = numpy.sqrt(((surf['center_coords'] - xcenter)**2).sum(axis=1)).max()
 
     # Generate tree, compute indices and precompute terms for M2M
-    surf.tree = generateTree(surf.xi, surf.yi, surf.zi, param.NCRIT, param.Nm,
+    surf['tree'] = generateTree(surf['center_coords'], param.NCRIT, param.Nm,
                              N, R_C0, x_center)
     C = 0
-    surf.twig = findTwigs(surf.tree, C, surf.twig, param.NCRIT)
+    surf['twig'] = findTwigs(surf['tree'], C, surf['twig'], param.NCRIT)
 
-    addSources(surf.tree, surf.twig, param.K)
-    #    addSources3(surf.xj,surf.yj,surf.zj,surf.tree,surf.twig)
-    #    for j in range(Nj):
-    #        C = 0
-    #        addSources2(surf.xj,surf.yj,surf.zj,j,surf.tree,C,param.NCRIT)
+    addSources(surf['tree'], surf['twig'], param.K)
 
-    surf.xk, surf.wk = GQ_1D(param.Nk)
-    surf.Xsk, surf.Wsk = quadratureRule_fine(param.K_fine)
+    surf['xk'], surf['wk'] = GQ_1D(param.Nk)
+    surf['Xsk'], surf['Wsk'] = quadratureRule_fine(param.K_fine)
 
-    # Generate preconditioner
-    # Will use block-diagonal preconditioner (AltmanBardhanWhiteTidor2008)
-    #If we have complex dielectric constants we need to initialize Precon with
-    #complex type else it'll be float.
-    if type(surf.E_hat) == complex:
-        surf.Precond = numpy.zeros((4, N), complex)
-    else:
-        surf.Precond = numpy.zeros((4, N))
-    # Stores the inverse of the block diagonal (also a tridiag matrix)
-    # Order: Top left, top right, bott left, bott right
-    centers = numpy.zeros((N, 3))
-    centers[:, 0] = surf.xi[:]
-    centers[:, 1] = surf.yi[:]
-    centers[:, 2] = surf.zi[:]
+#    # Stores the inverse of the block diagonal (also a tridiag matrix)
+#    # Order: Top left, top right, bott left, bott right
+#    centers = numpy.zeros((N, 3))
+#    centers[:, 0] = surf.xi[:]
+#    centers[:, 1] = surf.yi[:]
+#    centers[:, 2] = surf.zi[:]
 
     #   Compute diagonal integral for internal equation
     VL = numpy.zeros(N)
     KL = numpy.zeros(N)
     VY = numpy.zeros(N)
     KY = numpy.zeros(N)
-    computeDiagonal(VL, KL, VY, KY, numpy.ravel(surf.vertex[surf.triangle[:]]),
-                    numpy.ravel(centers), surf.kappa_in, 2 * numpy.pi, 0.,
-                    surf.xk, surf.wk)
-    if surf.LorY_in == 1:
+    computeDiagonal(VL, KL, VY, KY, numpy.ravel(surf['vertex'][surf['triangle'][:]]),
+                    numpy.ravel(centers), surf['kappa_in'], 2 * numpy.pi, 0.,
+                    surf['xk'], surf['wk'])
+    if surf['LorY_in'] == 1:
         dX11 = KL
         dX12 = -VL
-        surf.sglInt_int = VL  # Array for singular integral of V through interior
-    elif surf.LorY_in == 2:
+        surf['sglInt_int'] = VL  # Array for singular integral of V through interior
+    elif surf['LorY_in'] == 2:
         dX11 = KY
         dX12 = -VY
-        surf.sglInt_int = VY  # Array for singular integral of V through interior
+        surf['sglInt_int'] = VY  # Array for singular integral of V through interior
     else:
-        surf.sglInt_int = numpy.zeros(N)
+        surf['sglInt_int'] = numpy.zeros(N)
 
 #   Compute diagonal integral for external equation
     VL = numpy.zeros(N)
     KL = numpy.zeros(N)
     VY = numpy.zeros(N)
     KY = numpy.zeros(N)
-    computeDiagonal(VL, KL, VY, KY, numpy.ravel(surf.vertex[surf.triangle[:]]),
-                    numpy.ravel(centers), surf.kappa_out, 2 * numpy.pi, 0.,
-                    surf.xk, surf.wk)
-    if surf.LorY_out == 1:
+    computeDiagonal(VL, KL, VY, KY, numpy.ravel(surf['vertex'][surf['triangle'][:]]),
+                    numpy.ravel(centers), surf['kappa_out'], 2 * numpy.pi, 0.,
+                    surf['xk'], surf['wk'])
+    if surf['LorY_out'] == 1:
         dX21 = KL
-        dX22 = surf.E_hat * VL
-        surf.sglInt_ext = VL  # Array for singular integral of V through exterior
-    elif surf.LorY_out == 2:
+        dX22 = surf['E_hat'] * VL
+        surf['sglInt_ext'] = VL  # Array for singular integral of V through exterior
+    elif surf['LorY_out'] == 2:
         dX21 = KY
-        dX22 = surf.E_hat * VY
-        surf.sglInt_ext = VY  # Array for singular integral of V through exterior
+        dX22 = surf['E_hat'] * VY
+        surf['sglInt_ext'] = VY  # Array for singular integral of V through exterior
     else:
-        surf.sglInt_ext = numpy.zeros(N)
+        surf['sglInt_ext'] = numpy.zeros(N)
 
-    if surf.surf_type != 'dirichlet_surface' and surf.surf_type != 'neumann_surface':
+    # Generate preconditioner
+    # Will use block-diagonal preconditioner (AltmanBardhanWhiteTidor2008)
+    #If we have complex dielectric constants we need to initialize Precon with
+    #complex type else it'll be float.
+    if type(surf['E_hat']) == complex:
+        surf['Precond'] = numpy.zeros((4, N), complex)
+    else:
+        surf['Precond'] = numpy.zeros((4, N))
+
+    if (surf['surf_type'] != 'dirichlet_surface'
+        and surf['surf_type'] != 'neumann_surface'):
         d_aux = 1 / (dX22 - dX21 * dX12 / dX11)
-        surf.Precond[0, :] = 1 / dX11 + 1 / dX11 * dX12 * d_aux * dX21 / dX11
-        surf.Precond[1, :] = -1 / dX11 * dX12 * d_aux
-        surf.Precond[2, :] = -d_aux * dX21 / dX11
-        surf.Precond[3, :] = d_aux
-    elif surf.surf_type == 'dirichlet_surface':
-        surf.Precond[0, :] = 1 / VY  # So far only for Yukawa outside
-    elif surf.surf_type == 'neumann_surface' or surf.surf_type == 'asc_surface':
-        surf.Precond[0, :] = 1 / (2 * numpy.pi)
+        surf['Precond'][0, :] = 1 / dX11 + 1 / dX11 * dX12 * d_aux * dX21 / dX11
+        surf['Precond'][1, :] = -1 / dX11 * dX12 * d_aux
+        surf['Precond'][2, :] = -d_aux * dX21 / dX11
+        surf['Precond'][3, :] = d_aux
+    elif surf['surf_type'] == 'dirichlet_surface':
+        surf['Precond'][0, :] = 1 / VY  # So far only for Yukawa outside
+    elif surf['surf_type'] == 'neumann_surface' or surf['surf_type'] == 'asc_surface':
+        surf['Precond'][0, :] = 1 / (2 * numpy.pi)
 
     tic = time.time()
-    sortPoints(surf, surf.tree, surf.twig, param)
+    sortPoints(surf, surf['tree'], surf['twig'], param)
     toc = time.time()
     time_sort = toc - tic
 
     return time_sort
+
+
+#def compute_diagonal_integral(surf, internal=True):
+#    """
+#
+#    Computes a diagonal integral for either the internal or external equation
+#
+#    Arguments
+#    ---------
+#    surf  :  dictionary, surface parameters
+#    internal : kwarg to determine if internal or external surface
+#               should be evaluated
+#
+#    Returns
+#    _______
+#    surf  :  dictionary, modified in place
+#
+#    """
+#
+#    VL = numpy.zeros(N)
+#    KL = numpy.zeros(N)
+#    VY = numpy.zeros(N)
+#    KY = numpy.zeros(N)
+#
+#    if internal:
+#
+#    kappa = 'kappa_{}'.format(side)
+#    LorY = 'LorY_{}'.format(side)
+#    sglInt = 'sglInt_{}'.format
+#    computeDiagonal(VL, KL, VY, KY, numpy.ravel(surf['vertex'][surf['triangle'][:]]),
+#                    numpy.ravel(centers), surf['kappa_in'], 2 * numpy.pi, 0.,
+#                    surf['xk'], surf['wk'])
+#    if surf['LorY_in'] == 1:
+#        dX11 = KL
+#        dX12 = -VL
+#        surf['sglInt_int'] = VL  # Array for singular integral of V through interior
+#    elif surf['LorY_in'] == 2:
+#        dX11 = KY
+#        dX12 = -VY
+#        surf['sglInt_int'] = VY  # Array for singular integral of V through interior
+#    else:
+#        surf['sglInt_int'] = numpy.zeros(N)
+#
+#    return surf
 
 
 def initializeField(filename, param):
