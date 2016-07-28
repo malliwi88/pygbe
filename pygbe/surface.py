@@ -40,41 +40,41 @@ def initializeSurf(field_array, filename, param):
     for i in range(Nsurf):
         print('\nReading surface {} from file {}'.format(i, files[i]))
 
-        s = Surface()
+        s = {}#Surface()
 
-        s.surf_type = surf_type[i]
+        s['surf_type'] = surf_type[i]
 
-        if s.surf_type == 'dirichlet_surface' or s.surf_type == 'neumann_surface':
-            s.phi0 = numpy.loadtxt(phi0_file[i])
+        if s['surf_type'] == 'dirichlet_surface' or s['surf_type'] == 'neumann_surface':
+            s['phi0'] = numpy.loadtxt(phi0_file[i])
             print('\nReading phi0 file for surface {} from {}'.format(i, phi0_file[i]))
 
         Area_null = []
         tic = time.time()
-        s.vertex = readVertex(files[i] + '.vert', param.REAL)
-        triangle_raw = readTriangle(files[i] + '.face', s.surf_type)
+        s['vertex'] = readVertex(files[i] + '.vert', param.REAL)
+        triangle_raw = readTriangle(files[i] + '.face', s['surf_type'])
         toc = time.time()
         print('Time load mesh: {}'.format(toc - tic))
         Area_null = zeroAreas(s, triangle_raw, Area_null)
-        s.triangle = numpy.delete(triangle_raw, Area_null, 0)
+        s['triangle'] = numpy.delete(triangle_raw, Area_null, 0)
         print('Removed areas=0: {}'.format(len(Area_null)))
 
         # Look for regions inside/outside
         for j in range(Nsurf + 1):
             if len(field_array[j].parent) > 0:
                 if field_array[j].parent[0] == i:  # Inside region
-                    s.kappa_in = field_array[j].kappa
-                    s.Ein = field_array[j].E
-                    s.LorY_in = field_array[j].LorY
+                    s['kappa_in'] = field_array[j].kappa
+                    s['Ein'] = field_array[j].E
+                    s['LorY_in'] = field_array[j].LorY
             if len(field_array[j].child) > 0:
                 if i in field_array[j].child:  # Outside region
-                    s.kappa_out = field_array[j].kappa
-                    s.Eout = field_array[j].E
-                    s.LorY_out = field_array[j].LorY
+                    s['kappa_out'] = field_array[j].kappa
+                    s['Eout'] = field_array[j].E
+                    s['LorY_out'] = field_array[j].LorY
 
-        if s.surf_type != 'dirichlet_surface' and s.surf_type != 'neumann_surface':
-            s.E_hat = s.Ein / s.Eout
+        if s['surf_type'] != 'dirichlet_surface' and s['surf_type'] != 'neumann_surface':
+            s['E_hat'] = s['Ein'] / s['Eout']
         else:
-            s.E_hat = 1
+            s['E_hat'] = 1
 
         surf_array.append(s)
     return surf_array
@@ -129,26 +129,37 @@ def fill_surface(surf, param):
     N = len(surf.triangle)
     Nj = N * param.K
     # Calculate centers
-    surf.xi = numpy.average(surf.vertex[surf.triangle[:], 0], axis=1)
-    surf.yi = numpy.average(surf.vertex[surf.triangle[:], 1], axis=1)
-    surf.zi = numpy.average(surf.vertex[surf.triangle[:], 2], axis=1)
+    surf.center_coords = numpy.average(surf.vertex[surf.triangle[:], :], axis=1)
+#    surf.center_coords = dict(zip(keys, [_coords[:,0], _coords[:, 1], _coords[:,2]]))
+#    surf.center_coords['x'] = numpy.average(surf.vertex[surf.triangle[:], 0], axis=1)
+#    surf.center_coords['y'] = numpy.average(surf.vertex[surf.triangle[:], 1], axis=1)
+#    surf.center_coords['z'] = numpy.average(surf.vertex[surf.triangle[:], 2], axis=1)
+    import ipdb; ipdb.set_trace()
 
     surf.normal = numpy.zeros((N, 3))
-    surf.Area = numpy.zeros(N)
+    surf.Area = numpy.zeros((N, 1))
 
     L0 = surf.vertex[surf.triangle[:, 1]] - surf.vertex[surf.triangle[:, 0]]
     L2 = surf.vertex[surf.triangle[:, 0]] - surf.vertex[surf.triangle[:, 2]]
     surf.normal = numpy.cross(L0, L2)
-    surf.Area = numpy.sqrt(surf.normal[:, 0]**2 + surf.normal[:, 1]**2 +
-                           surf.normal[:, 2]**2) / 2
-    surf.normal[:, 0] = surf.normal[:, 0] / (2 * surf.Area)
-    surf.normal[:, 1] = surf.normal[:, 1] / (2 * surf.Area)
-    surf.normal[:, 2] = surf.normal[:, 2] / (2 * surf.Area)
+    surf.Area[:,0] = numpy.sqrt((surf.normal**2)).sum(axis=1) / 2
+#    numpy.sqrt(surf.normal[:, 0]**2 + surf.normal[:, 1]**2 +
+#                           surf.normal[:, 2]**2) / 2
+
+    surf.normal = surf.normal / (2 * surf.Area)
+#    surf.normal[:, 0] = surf.normal[:, 0] / (2 * surf.Area)
+#    surf.normal[:, 1] = surf.normal[:, 1] / (2 * surf.Area)
+#    surf.normal[:, 2] = surf.normal[:, 2] / (2 * surf.Area)
 
     # Set Gauss points (sources)
-    surf.xj, surf.yj, surf.zj = getGaussPoints(surf.vertex, surf.triangle,
-                                               param.K)
+    surf.gauss_coords = dict(zip(keys,
+                                 getGaussPoints(surf.vertex,
+                                                surf.triangle,
+                                                param.K)))
+#    surf.xj, surf.yj, surf.zj = getGaussPoints(surf.vertex, surf.triangle,
+#                                               param.K)
 
+    import ipdb; ipdb.set_trace()
     x_center = numpy.zeros(3)
     x_center[0] = numpy.average(surf.xi).astype(param.REAL)
     x_center[1] = numpy.average(surf.yi).astype(param.REAL)
