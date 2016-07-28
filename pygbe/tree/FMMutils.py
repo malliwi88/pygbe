@@ -336,7 +336,7 @@ def addSources3(x, y, z, Cells, twig):
 
 
 
-def sortPoints(surface, Cells, twig, param):
+def sort_points(surface, Cells, twig, param):
     """
     It sort the target and source points.
 
@@ -354,38 +354,41 @@ def sortPoints(surface, Cells, twig, param):
 
     Nround = len(twig) * param.NCRIT
 
-    surface['sortTarget'] = numpy.zeros(Nround, dtype=numpy.int32)
-    surface['unsort'] = numpy.zeros(len(surface['xi']), dtype=numpy.int32)
-    surface['sortSource'] = numpy.zeros(len(surface['xj']), dtype=numpy.int32)
-    surface['offsetSource'] = numpy.zeros(len(twig) + 1, dtype=numpy.int32)
-    surface['offsetTarget'] = numpy.zeros(len(twig), dtype=numpy.int32)
-    surface['sizeTarget'] = numpy.zeros(len(twig), dtype=numpy.int32)
+    surface['sort_target'] = numpy.zeros(Nround, dtype=numpy.int32)
+    surface['unsort'] = numpy.zeros(surface['center_coords'].shape[0],
+                                    dtype=numpy.int32)
+    surface['sort_source'] = numpy.zeros(surface['gauss_coords'].shape[0],
+                                        dtype=numpy.int32)
+    surface['offset_source'] = numpy.zeros(len(twig) + 1, dtype=numpy.int32)
+    surface['offset_target'] = numpy.zeros(len(twig), dtype=numpy.int32)
+    surface['size_target'] = numpy.zeros(len(twig), dtype=numpy.int32)
     offTar = 0
     offSrc = 0
     i = 0
     for C in twig:
-        surface['sortTarget'][param.NCRIT * i:param.NCRIT * i + Cells[
+        surface['sort_target'][param.NCRIT * i:param.NCRIT * i + Cells[
             C].ntarget] = Cells[C].target
         surface['unsort'][Cells[C].target] = range(
             param.NCRIT * i, param.NCRIT * i + Cells[C].ntarget)
-        surface['sortSource'][offSrc:offSrc + Cells[C].nsource] = Cells[C].source
+        surface['sort_source'][offSrc:offSrc + Cells[C].nsource] = Cells[C].source
         offSrc += Cells[C].nsource
-        surface['offsetSource'][i + 1] = offSrc
-        surface['offsetTarget'][i] = i * param.NCRIT
-        surface['sizeTarget'][i] = Cells[C].ntarget
+        surface['offset_source'][i + 1] = offSrc
+        surface['offset_target'][i] = i * param.NCRIT
+        surface['size_target'][i] = Cells[C].ntarget
         i += 1
 
-    import ipdb; ipdb.set_trace()
-    surface['xiSort'] = surface['xi'][surface['sortTarget']]
-    surface['yiSort'] = surface['yi'][surface['sortTarget']]
-    surface['ziSort'] = surface['zi'][surface['sortTarget']]
-    surface['xjSort'] = surface['xj'][surface['sortSource']]
-    surface['yjSort'] = surface['yj'][surface['sortSource']]
-    surface['zjSort'] = surface['zj'][surface['sortSource']]
-    surface['AreaSort'] = surface['Area'][surface['sortSource'] // param.K]
-    surface['sglInt_intSort'] = surface['sglInt_int'][surface['sortSource'] // param.K]
-    surface['sglInt_extSort'] = surface['sglInt_ext'][surface['sortSource'] // param.K]
-    surface['triangleSort'] = surface['triangle'][surface['sortSource'] // param.K]
+   # surface['xiSort'] = surface['xi'][surface['sort_target']]
+   # surface['yiSort'] = surface['yi'][surface['sort_target']]
+   # surface['ziSort'] = surface['zi'][surface['sort_target']]
+   # surface['xjSort'] = surface['xj'][surface['sort_source']]
+   # surface['yjSort'] = surface['yj'][surface['sort_source']]
+   # surface['zjSort'] = surface['zj'][surface['sort_source']]
+    surface['center_coord_sort'] = surface['center_coords'][surface['sort_target']]
+    surface['gauss_coord_sort'] = surface['gauss_coords'][surface['sort_target']]
+    surface['area_sort'] = surface['area'][surface['sort_source'] // param.K]
+    surface['sglInt_intSort'] = surface['sglInt_int'][surface['sort_source'] // param.K]
+    surface['sglInt_extSort'] = surface['sglInt_ext'][surface['sort_source'] // param.K]
+    surface['triangle_sort'] = surface['triangle'][surface['sort_source'] // param.K]
 
 
 def computeIndices(P, ind0):
@@ -740,7 +743,7 @@ def M2P_sort(surfSrc, surfTar, K_aux, V_aux, surf, index, param, LorY, timing):
         MSort[i * param.Nm:i * param.Nm + param.Nm] = surfSrc.tree[C].M
         MdSort[i * param.Nm:i * param.Nm + param.Nm] = surfSrc.tree[C].Md
 
-    multipole_sort(K_aux, V_aux, surfTar.offsetTarget, surfTar.sizeTarget,
+    multipole_sort(K_aux, V_aux, surfTar.offset_target, surfTar.size_target,
                    surfTar.offsetMlt[surf], MSort, MdSort, surfTar.xiSort,
                    surfTar.yiSort, surfTar.ziSort, surfTar.xcSort[surf],
                    surfTar.ycSort[surf], surfTar.zcSort[surf], index, param.P,
@@ -797,8 +800,8 @@ def M2PKt_sort(surfSrc, surfTar, Ktx_aux, Kty_aux, Ktz_aux, surf, index, param,
         i += 1
         MSort[i * param.Nm:i * param.Nm + param.Nm] = surfSrc.tree[C].M
 
-    multipoleKt_sort(Ktx_aux, Kty_aux, Ktz_aux, surfTar.offsetTarget,
-                     surfTar.sizeTarget, surfTar.offsetMlt[surf], MSort,
+    multipoleKt_sort(Ktx_aux, Kty_aux, Ktz_aux, surfTar.offset_target,
+                     surfTar.size_target, surfTar.offsetMlt[surf], MSort,
                      surfTar.xiSort, surfTar.yiSort, surfTar.ziSort,
                      surfTar.xcSort[surf], surfTar.ycSort[surf],
                      surfTar.zcSort[surf], index, param.P, param.kappa,
@@ -1052,8 +1055,8 @@ def P2P_sort(surfSrc, surfTar, m, mx, my, mz, mKc, mVc, K_aux, V_aux, surf,
     yt = surfTar.yiSort
     zt = surfTar.ziSort
 
-    tri = surfSrc.sortSource / param.K  # Triangle
-    k = surfSrc.sortSource % param.K  # Gauss point
+    tri = surfSrc.sort_source / param.K  # Triangle
+    k = surfSrc.sort_source % param.K  # Gauss point
 
     aux = numpy.zeros(2)
 
@@ -1062,7 +1065,7 @@ def P2P_sort(surfSrc, surfTar, m, mx, my, mz, mKc, mVc, K_aux, V_aux, surf,
         numpy.ravel(surfSrc.vertex[surfSrc.triangleSort[:]]), numpy.int32(tri),
         numpy.int32(k), surfTar.xi, surfTar.yi, surfTar.zi, s_xj, s_yj, s_zj,
         xt, yt, zt, m, mx, my, mz, mKc, mVc, surfTar.P2P_list[surf],
-        surfTar.offsetTarget, surfTar.sizeTarget, surfSrc.offsetSource,
+        surfTar.offset_target, surfTar.size_target, surfSrc.offset_source,
         surfTar.offsetTwigs[surf], numpy.int32(surfTar.tree[0].target),
         surfSrc.AreaSort, surfSrc.sglInt_intSort, surfSrc.sglInt_extSort,
         surfSrc.xk, surfSrc.wk, surfSrc.Xsk, surfSrc.Wsk, param.kappa,
@@ -1132,16 +1135,16 @@ def P2PKt_sort(surfSrc, surfTar, m, mKc, Ktx_aux, Kty_aux, Ktz_aux, surf, LorY,
     yt = surfTar.yiSort
     zt = surfTar.ziSort
 
-    tri = surfSrc.sortSource / param.K  # Triangle
-    k = surfSrc.sortSource % param.K  # Gauss point
+    tri = surfSrc.sort_source / param.K  # Triangle
+    k = surfSrc.sort_source % param.K  # Gauss point
 
     aux = numpy.zeros(2)
 
     directKt_sort(Ktx_aux, Kty_aux, Ktz_aux, int(LorY),
                   numpy.ravel(surfSrc.vertex[surfSrc.triangleSort[:]]),
                   numpy.int32(k), s_xj, s_yj, s_zj, xt, yt, zt, m, mKc,
-                  surfTar.P2P_list[surf], surfTar.offsetTarget,
-                  surfTar.sizeTarget, surfSrc.offsetSource,
+                  surfTar.P2P_list[surf], surfTar.offset_target,
+                  surfTar.size_target, surfSrc.offset_source,
                   surfTar.offsetTwigs[surf], surfSrc.AreaSort, surfSrc.Xsk,
                   surfSrc.Wsk, param.kappa, param.threshold, param.eps, aux)
 
