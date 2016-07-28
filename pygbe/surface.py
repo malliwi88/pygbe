@@ -6,7 +6,7 @@ import time
 import numpy
 from scipy import linalg
 
-from pygbe.tree.FMMutils import addSources, sortPoints, generateTree, findTwigs
+from pygbe.tree.FMMutils import addSources, sort_points, generateTree, findTwigs
 from pygbe.tree.direct import computeDiagonal
 from pygbe.util.semi_analytical import GQ_1D
 from pygbe.util.readData import (readVertex, readTriangle, readpqr, readcrd,
