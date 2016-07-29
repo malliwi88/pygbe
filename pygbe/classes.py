@@ -1,5 +1,6 @@
 import time
 import numpy
+from lazyasd import LazyObject
 
 class Event():
     """
@@ -174,6 +175,7 @@ class Surface():
         self.phi0         = []  # Known surface potential (dirichlet) or derivative of potential (neumann)
         self.phi          = []  # Potential on surface
         self.dphi         = []  # Derivative of potential on surface
+        self.N = LazyObject(lambda: len(self.triangle), globals(), 'self.N')
 
         # Device data
         self.xiDev      = []
