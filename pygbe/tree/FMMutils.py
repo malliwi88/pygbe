@@ -337,7 +337,7 @@ def addSources3(x, y, z, Cells, twig):
             Cells[twig[close_twig[j]]].source, j)
 
 
-
+# TODO remove camelCase
 def sortPoints(surface, Cells, twig, param):
     """
     It sort the target and source points.
@@ -356,9 +356,17 @@ def sortPoints(surface, Cells, twig, param):
 
     Nround = len(twig) * param.NCRIT
 
+    #TODO get rid of these once the Surface class is more cleaned up
+    xi = surface.center_coords[:, 0]
+    yi = surface.center_coords[:, 1]
+    zi = surface.center_coords[:, 2]
+    xj = surface.gauss_coords[:, 0]
+    yj = surface.gauss_coords[:, 1]
+    zj = surface.gauss_coords[:, 2]
+    ####
     surface.sortTarget = numpy.zeros(Nround, dtype=numpy.int32)
-    surface.unsort = numpy.zeros(len(surface.xi), dtype=numpy.int32)
-    surface.sortSource = numpy.zeros(len(surface.xj), dtype=numpy.int32)
+    surface.unsort = numpy.zeros(len(xi), dtype=numpy.int32)
+    surface.sortSource = numpy.zeros(len(xj), dtype=numpy.int32)
     surface.offsetSource = numpy.zeros(len(twig) + 1, dtype=numpy.int32)
     surface.offsetTarget = numpy.zeros(len(twig), dtype=numpy.int32)
     surface.sizeTarget = numpy.zeros(len(twig), dtype=numpy.int32)
@@ -377,12 +385,14 @@ def sortPoints(surface, Cells, twig, param):
         surface.sizeTarget[i] = Cells[C].ntarget
         i += 1
 
-    surface.xiSort = surface.xi[surface.sortTarget]
-    surface.yiSort = surface.yi[surface.sortTarget]
-    surface.ziSort = surface.zi[surface.sortTarget]
-    surface.xjSort = surface.xj[surface.sortSource]
-    surface.yjSort = surface.yj[surface.sortSource]
-    surface.zjSort = surface.zj[surface.sortSource]
+
+    #TODO don't do this.  should the sorting be handled by the surface class?
+    surface.xiSort = xi[surface.sortTarget]
+    surface.yiSort = yi[surface.sortTarget]
+    surface.ziSort = zi[surface.sortTarget]
+    surface.xjSort = xj[surface.sortSource]
+    surface.yjSort = yj[surface.sortSource]
+    surface.zjSort = zj[surface.sortSource]
     surface.AreaSort = surface.Area[surface.sortSource // param.K]
     surface.sglInt_intSort = surface.sglInt_int[surface.sortSource // param.K]
     surface.sglInt_extSort = surface.sglInt_ext[surface.sortSource // param.K]

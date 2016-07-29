@@ -138,6 +138,14 @@ class Surface():
         #self.gauss_coords = []  # was xj, yj, zj
         self.center_coords_sort = [] #was xiSort, yiSort, ziSort
         self.gauss_coords_sort = [] # was xjSort, yjSort, zjSort
+        #TODO remove these when possible
+        self.xiSort = []
+        self.yiSort = []
+        self.ziSort = []
+        self.xjSort = []
+        self.yjSort = []
+        self.zjSort = []
+        ###
         self.M2P_box_centers_sort = [] # was xcSort, ycSort, zcSort
         self.AreaSort = []  # sorted array of areas
         #self.Area     = []  # Area of triangles
