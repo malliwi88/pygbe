@@ -129,33 +129,17 @@ def fill_surface(surf, param):
     N = len(surf.triangle)
     Nj = N * param.K
     # Calculate centers
-    surf.xi = numpy.average(surf.vertex[surf.triangle[:], 0], axis=1)
-    surf.yi = numpy.average(surf.vertex[surf.triangle[:], 1], axis=1)
-    surf.zi = numpy.average(surf.vertex[surf.triangle[:], 2], axis=1)
-
-    surf.normal = numpy.zeros((N, 3))
-    surf.Area = numpy.zeros(N)
-
-    L0 = surf.vertex[surf.triangle[:, 1]] - surf.vertex[surf.triangle[:, 0]]
-    L2 = surf.vertex[surf.triangle[:, 0]] - surf.vertex[surf.triangle[:, 2]]
-    surf.normal = numpy.cross(L0, L2)
-    surf.Area = numpy.sqrt(surf.normal[:, 0]**2 + surf.normal[:, 1]**2 +
-                           surf.normal[:, 2]**2) / 2
-    surf.normal[:, 0] = surf.normal[:, 0] / (2 * surf.Area)
-    surf.normal[:, 1] = surf.normal[:, 1] / (2 * surf.Area)
-    surf.normal[:, 2] = surf.normal[:, 2] / (2 * surf.Area)
+    import ipdb; ipdb.set_trace()
+    surf.calc_centers()
+    surf.calc_normals()
+    surf.calc_area()
 
     # Set Gauss points (sources)
-    surf.xj, surf.yj, surf.zj = getGaussPoints(surf.vertex, surf.triangle,
-                                               param.K)
+    surf.get_gauss_points(param.K)
 
-    x_center = numpy.zeros(3)
-    x_center[0] = numpy.average(surf.xi).astype(param.REAL)
-    x_center[1] = numpy.average(surf.yi).astype(param.REAL)
-    x_center[2] = numpy.average(surf.zi).astype(param.REAL)
-    dist = numpy.sqrt((surf.xi - x_center[0])**2 + (surf.yi - x_center[1])**2 +
-                      (surf.zi - x_center[2])**2)
-    R_C0 = max(dist)
+#    dist = surf.get_distance()
+#    R_C0 = max(dist)
+
 
     # Generate tree, compute indices and precompute terms for M2M
     surf.tree = generateTree(surf.xi, surf.yi, surf.zi, param.NCRIT, param.Nm,

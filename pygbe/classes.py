@@ -1,4 +1,5 @@
 import time
+import numpy
 
 class Event():
     """
@@ -29,10 +30,10 @@ class Surface():
     XinK          : list, weights input for double layer potential.
     Xout_int      : list, output vector of interior operators.
     Xout_ext      : list, output vector of exterior operators.
-    xi            : list, x component of center.
+    center_coords            : list, x component of center.
     yi            : list, y component of center.
     zi            : list, z component of center.
-    xj            : list, x component of gauss nodes.
+    gauss_coords            : list, x component of gauss nodes.
     yj            : list, y component of gauss nodes.
     zj            : list, z component of gauss nodes.
     Area          : list, areas of triangles.
@@ -132,14 +133,14 @@ class Surface():
         self.XinK     = []  # weights input for double layer potential
         self.Xout_int = []  # output vector of interior operators
         self.Xout_ext = []  # output vector of exterior operators
-        self.xi       = []  # x component of center
-        self.yi       = []  # y component of center
-        self.zi       = []  # z component of center
-        self.xj       = []  # x component of gauss nodes
-        self.yj       = []  # y component of gauss nodes
-        self.zj       = []  # z component of gauss nodes
-        self.Area     = []  # Area of triangles
-        self.normal   = []  # normal of triangles
+        #self.center_coords = [] # was self.gauss_coords, yi, zi
+        #self.gauss_coords = []  # was xj, yj, zj
+        self.center_coords_sort = [] #was xiSort, yiSort, ziSort
+        self.gauss_coords_sort = [] # was xjSort, yjSort, zjSort
+        self.M2P_box_centers_sort = [] # was xcSort, ycSort, zcSort
+        self.AreaSort = []  # sorted array of areas
+        #self.Area     = []  # Area of triangles
+        #self.normal   = []  # normal of triangles
         self.sglInt_int = []  # singular integrals for V for internal equation
         self.sglInt_ext = []  # singular integrals for V for external equation
         self.xk       = []  # position of gauss points on edges
@@ -148,16 +149,6 @@ class Surface():
         self.Wsk      = []  # weight of gauss points for near singular integrals
         self.tree     = []  # tree structure
         self.twig     = []  # tree twigs
-        self.xiSort   = []  # sorted x component of center
-        self.yiSort   = []  # sorted y component of center
-        self.ziSort   = []  # sorted z component of center
-        self.xjSort   = []  # sorted x component of gauss nodes
-        self.yjSort   = []  # sorted y component of gauss nodes
-        self.zjSort   = []  # sorted z component of gauss nodes
-        self.xcSort   = []  # sorted x component box centers according to M2P_list array
-        self.ycSort   = []  # sorted y component box centers according to M2P_list array
-        self.zcSort   = []  # sorted z component box centers according to M2P_list array
-        self.AreaSort = []  # sorted array of areas
         self.sglInt_intSort  = []  # sorted array of singular integrals for V for internal equation
         self.sglInt_extSort  = []  # sorted array of singular integrals for V for external equation
         self.unsort       = []  # array of indices to unsort targets
@@ -209,6 +200,81 @@ class Surface():
         self.XskDev     = []
         self.WskDev     = []
         self.kDev       = []
+
+    def calc_centers(self):
+        """
+        Calculate the x, y, z coordinates of the centers of each triangle
+        in the mesh
+        """
+
+        self.center_coords = numpy.average(
+                                self.vertex[self.triangle[...], 0:3], axis=1)
+
+    def calc_normals(self):
+        """
+        Calculate the normal vectors of each triangle
+        """
+        L0 = self.vertex[self.triangle[:, 1]] - self.vertex[self.triangle[:, 0]]
+        L2 = self.vertex[self.triangle[:, 0]] - self.vertex[self.triangle[:, 2]]
+        self.normal = numpy.cross(L0, L2)
+        _area = numpy.sqrt((self.normal**2).sum(axis=1)) / 2
+        self.normal /= (2 * _area[:, numpy.newaxis])
+
+    def calc_area(self):
+        """
+        Calculate the area of... something
+        """
+        self.Area = numpy.sqrt((self.normal**2).sum(axis=1)) / 2
+
+    def get_distance(self):
+        """
+        Calculate the distances of each triangle center from the center
+        of the surface
+        """
+        center = numpy.average(self.center_coords, axis=0)
+        dist = numpy.sqrt(((self.center_coords - center)**2).sum(axis=1))
+
+        return center, dist
+
+    def get_gauss_points(self, n):
+        """
+        Sets the Gauss points for far away integrals.
+
+        Arguments
+        ----------
+        n       : int (1,3,4,7), desired Gauss points per element.
+        """
+
+        N  = len(self.triangle) # Number of triangles
+        self.gauss_coords = numpy.zeros((N*n,3))
+        if n==1:
+            self.gauss_coords[...] = numpy.average(self.vertex[self.triangle[...], 0:3], axis=1)
+
+        if n==3:
+            for i in range(N):
+                M = numpy.transpose(self.vertex[self.triangle[i]])
+                self.gauss_coords[n*i,:] = numpy.dot(M, numpy.array([0.5, 0.5, 0.]))
+                self.gauss_coords[n*i+1,:] = numpy.dot(M, numpy.array([0., 0.5, 0.5]))
+                self.gauss_coords[n*i+2,:] = numpy.dot(M, numpy.array([0.5, 0., 0.5]))
+
+        if n==4:
+            for i in range(N):
+                M = numpy.transpose(self.vertex[self.triangle[i]])
+                self.gauss_coords[n*i,:] = numpy.dot(M, numpy.array([1/3., 1/3., 1/3.]))
+                self.gauss_coords[n*i+1,:] = numpy.dot(M, numpy.array([3/5., 1/5., 1/5.]))
+                self.gauss_coords[n*i+2,:] = numpy.dot(M, numpy.array([1/5., 3/5., 1/5.]))
+                self.gauss_coords[n*i+3,:] = numpy.dot(M, numpy.array([1/5., 1/5., 3/5.]))
+
+        if n==7:
+            for i in range(N):
+                M = numpy.transpose(self.vertex[self.triangle[i]])
+                self.gauss_coords[n*i+0,:] = numpy.dot(M, numpy.array([1/3.,1/3.,1/3.]))
+                self.gauss_coords[n*i+1,:] = numpy.dot(M, numpy.array([.797426985353087,.101286507323456,.101286507323456]))
+                self.gauss_coords[n*i+2,:] = numpy.dot(M, numpy.array([.101286507323456,.797426985353087,.101286507323456]))
+                self.gauss_coords[n*i+3,:] = numpy.dot(M, numpy.array([.101286507323456,.101286507323456,.797426985353087]))
+                self.gauss_coords[n*i+4,:] = numpy.dot(M, numpy.array([.059715871789770,.470142064105115,.470142064105115]))
+                self.gauss_coords[n*i+5,:] = numpy.dot(M, numpy.array([.470142064105115,.059715871789770,.470142064105115]))
+                self.gauss_coords[n*i+6,:] = numpy.dot(M, numpy.array([.470142064105115,.470142064105115,.059715871789770]))
 
 
 class Field():
