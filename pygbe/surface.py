@@ -126,10 +126,11 @@ def fill_surface(surf, param):
     time_sort: float, time spent in sorting the data needed for the treecode.
     """
 
-    N = len(surf.triangle)
+#    N = len(surf.triangle)
+    N = surf.N.real # surf.N is a LazyObject of type int, use the `.real` attribute
+    import ipdb; ipdb.set_trace()
     Nj = N * param.K
     # Calculate centers
-    import ipdb; ipdb.set_trace()
     surf.calc_centers()
     surf.calc_normals()
     surf.calc_area()
@@ -137,25 +138,28 @@ def fill_surface(surf, param):
     # Set Gauss points (sources)
     surf.get_gauss_points(param.K)
 
-#    dist = surf.get_distance()
-#    R_C0 = max(dist)
+    #TODO change this
+    x_center, dist = surf.get_distance()
+    R_C0 = max(dist)
 
+    #TODO fix generateTree to take in one array of points, not three and then remove this shit
+    xi = surf.center_coords[:, 0] # view on x coords (no copy)
+    yi = surf.center_coords[:, 1] # view on y coords (no copy)
+    zi = surf.center_coords[:, 2] # view on z coords (no copy)
 
+    #TODO move the generate Tree stuff into a separate file/class/whatev
     # Generate tree, compute indices and precompute terms for M2M
-    surf.tree = generateTree(surf.xi, surf.yi, surf.zi, param.NCRIT, param.Nm,
+    surf.tree = generateTree(xi, yi, zi, param.NCRIT, param.Nm,
                              N, R_C0, x_center)
     C = 0
     surf.twig = findTwigs(surf.tree, C, surf.twig, param.NCRIT)
 
     addSources(surf.tree, surf.twig, param.K)
-    #    addSources3(surf.xj,surf.yj,surf.zj,surf.tree,surf.twig)
-    #    for j in range(Nj):
-    #        C = 0
-    #        addSources2(surf.xj,surf.yj,surf.zj,j,surf.tree,C,param.NCRIT)
 
     surf.xk, surf.wk = GQ_1D(param.Nk)
     surf.Xsk, surf.Wsk = quadratureRule_fine(param.K_fine)
 
+    # TODO move this into the surface class (I think)
     # Generate preconditioner
     # Will use block-diagonal preconditioner (AltmanBardhanWhiteTidor2008)
     #If we have complex dielectric constants we need to initialize Precon with
@@ -167,9 +171,9 @@ def fill_surface(surf, param):
     # Stores the inverse of the block diagonal (also a tridiag matrix)
     # Order: Top left, top right, bott left, bott right
     centers = numpy.zeros((N, 3))
-    centers[:, 0] = surf.xi[:]
-    centers[:, 1] = surf.yi[:]
-    centers[:, 2] = surf.zi[:]
+    centers[:, 0] = xi[:]
+    centers[:, 1] = yi[:]
+    centers[:, 2] = zi[:]
 
     #   Compute diagonal integral for internal equation
     VL = numpy.zeros(N)
