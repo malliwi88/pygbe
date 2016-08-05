@@ -1,0 +1,211 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pygbe.tree.octree &mdash; PyGBe 0.2 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="PyGBe 0.2 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pygbe.tree.octree</h1><div class="highlight"><pre>
+
+<div class="viewcode-block" id="add_child"><a class="viewcode-back" href="../../../source/pygbe.tree.html#pygbe.tree.octree.add_child">[docs]</a><span class="k">def</span> <span class="nf">add_child</span><span class="p">(</span><span class="n">octant</span><span class="p">,</span> <span class="n">Cells</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">NCRIT</span><span class="p">,</span> <span class="n">Nm</span><span class="p">,</span> <span class="n">Ncell</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    It adds a child cell to the Cells.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ----------</span>
+<span class="sd">    octant: int, octant of the child cell.</span>
+<span class="sd">    Cells : array, it contains the cells information.</span>
+<span class="sd">    i     : int, index of parent cell in Cells array.</span>
+<span class="sd">    NCRIT : int, maximum number of boundary elements per twig box of tree</span>
+<span class="sd">                 structure.</span>
+<span class="sd">    Nm    : int, number of multipole coefficients.</span>
+<span class="sd">    Ncell : int, number of cells in the tree.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    --------</span>
+<span class="sd">    Ncell : int, number of cells in the tree.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">CN</span> <span class="o">=</span> <span class="n">Cell</span><span class="p">(</span><span class="n">NCRIT</span><span class="p">,</span> <span class="n">Nm</span><span class="p">)</span>  <span class="c"># CN: child cell</span>
+    <span class="n">CN</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">Cells</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">r</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">CN</span><span class="o">.</span><span class="n">xc</span> <span class="o">=</span> <span class="n">Cells</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">xc</span> <span class="o">+</span> <span class="n">CN</span><span class="o">.</span><span class="n">r</span> <span class="o">*</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">octant</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c"># octant&amp;X returns X if true</span>
+    <span class="n">CN</span><span class="o">.</span><span class="n">yc</span> <span class="o">=</span> <span class="n">Cells</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">yc</span> <span class="o">+</span> <span class="n">CN</span><span class="o">.</span><span class="n">r</span> <span class="o">*</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">octant</span> <span class="o">&amp;</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c"># Want to make ((octant&amp;X)*Y - Z)=1</span>
+    <span class="n">CN</span><span class="o">.</span><span class="n">zc</span> <span class="o">=</span> <span class="n">Cells</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">zc</span> <span class="o">+</span> <span class="n">CN</span><span class="o">.</span><span class="n">r</span> <span class="o">*</span> <span class="p">((</span><span class="n">octant</span> <span class="o">&amp;</span> <span class="mi">4</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">CN</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">i</span>
+    <span class="n">Cells</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">child</span><span class="p">[</span><span class="n">octant</span><span class="p">]</span> <span class="o">=</span> <span class="n">Ncell</span>
+    <span class="n">Cells</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">nchild</span> <span class="o">|=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">octant</span><span class="p">)</span>
+    <span class="n">Cells</span><span class="p">[</span><span class="n">Ncell</span><span class="p">]</span> <span class="o">=</span> <span class="n">CN</span>
+    <span class="n">Ncell</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">Ncell</span></div>
+
+
+<div class="viewcode-block" id="split_cell"><a class="viewcode-back" href="../../../source/pygbe.tree.html#pygbe.tree.octree.split_cell">[docs]</a><span class="k">def</span> <span class="nf">split_cell</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">Cells</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">NCRIT</span><span class="p">,</span> <span class="n">Nm</span><span class="p">,</span> <span class="n">Ncell</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    It splits a cell with more than (&gt;=) NCRIT particles.</span>
+<span class="sd">    Particles in this context means boundary elements.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x    : array, x position of the particles.</span>
+<span class="sd">    y    : array, y position of the particles.</span>
+<span class="sd">    z    : array, z position of the particles.</span>
+<span class="sd">    Cells: array, it contains the cells information.</span>
+<span class="sd">    C    : int, index in the Cells array of the cell to be splitted .</span>
+<span class="sd">    NCRIT: int, maximum number of boundary elements per twig box of tree</span>
+<span class="sd">                structure.</span>
+<span class="sd">    Nm   : int, number of multipole coefficients.</span>
+<span class="sd">    Ncell: int, number of cells in the tree.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    --------</span>
+<span class="sd">    Ncell: int, number of cells in the tree.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">target</span><span class="p">:</span>
+        <span class="n">octant</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">xc</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">yc</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">z</span><span class="p">[</span>
+            <span class="n">l</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">zc</span><span class="p">)</span> <span class="o">*</span> <span class="mi">4</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="p">(</span><span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">nchild</span> <span class="o">&amp;</span>
+                 <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">octant</span><span class="p">))):</span>  <span class="c"># Ask if octant exists already</span>
+            <span class="n">Ncell</span> <span class="o">=</span> <span class="n">add_child</span><span class="p">(</span><span class="n">octant</span><span class="p">,</span> <span class="n">Cells</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">NCRIT</span><span class="p">,</span> <span class="n">Nm</span><span class="p">,</span> <span class="n">Ncell</span><span class="p">)</span>
+
+        <span class="n">CC</span> <span class="o">=</span> <span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">child</span><span class="p">[</span><span class="n">octant</span><span class="p">]</span>  <span class="c"># Pointer to child cell</span>
+        <span class="n">Cells</span><span class="p">[</span><span class="n">CC</span><span class="p">]</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Cells</span><span class="p">[</span><span class="n">CC</span><span class="p">]</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span>
+        <span class="n">Cells</span><span class="p">[</span><span class="n">CC</span><span class="p">]</span><span class="o">.</span><span class="n">ntarget</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">Cells</span><span class="p">[</span><span class="n">CC</span><span class="p">]</span><span class="o">.</span><span class="n">ntarget</span> <span class="o">&gt;=</span> <span class="n">NCRIT</span><span class="p">):</span>
+            <span class="n">Ncell</span> <span class="o">=</span> <span class="n">split_cell</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">Cells</span><span class="p">,</span> <span class="n">CC</span><span class="p">,</span> <span class="n">NCRIT</span><span class="p">,</span> <span class="n">Nm</span><span class="p">,</span> <span class="n">Ncell</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Ncell</span></div>
+
+
+<div class="viewcode-block" id="generateTree"><a class="viewcode-back" href="../../../source/pygbe.tree.html#pygbe.tree.octree.generateTree">[docs]</a><span class="k">def</span> <span class="nf">generateTree</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">zi</span><span class="p">,</span> <span class="n">NCRIT</span><span class="p">,</span> <span class="n">Nm</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">x_center</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    It generates a target-based tree.</span>
+
+<span class="sd">    Arguments</span>
+<span class="sd">    ----------</span>
+<span class="sd">    xi      : array, x position of the targets, i.e collocation points.</span>
+<span class="sd">    yi      : array, y position of the targets, i.e collocation points.</span>
+<span class="sd">    zi      : array, z position of the targets, i.e collocation points.</span>
+<span class="sd">    NCRIT   : int, maximum number of boundary elements per twig box of tree</span>
+<span class="sd">                   structure.</span>
+<span class="sd">    Nm      : int, number of multipole coefficients.</span>
+<span class="sd">    r       : float, cell radius, i.e half length.</span>
+<span class="sd">    x_center: array, center of the root cell.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    --------</span>
+<span class="sd">    Cells   : array, cells of the tree.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">C0</span> <span class="o">=</span> <span class="n">Cell</span><span class="p">(</span><span class="n">NCRIT</span><span class="p">,</span> <span class="n">Nm</span><span class="p">)</span>
+    <span class="n">C0</span><span class="o">.</span><span class="n">xc</span> <span class="o">=</span> <span class="n">x_center</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">C0</span><span class="o">.</span><span class="n">yc</span> <span class="o">=</span> <span class="n">x_center</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">C0</span><span class="o">.</span><span class="n">zc</span> <span class="o">=</span> <span class="n">x_center</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">C0</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">radius</span>
+
+    <span class="n">Cells</span> <span class="o">=</span> <span class="p">[</span><span class="n">Cell</span><span class="p">(</span><span class="n">NCRIT</span><span class="p">,</span> <span class="n">Nm</span><span class="p">)]</span> <span class="o">*</span> <span class="n">N</span>
+    <span class="n">Cells</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">C0</span>
+    <span class="n">Ncell</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+
+        <span class="n">C</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">ntarget</span> <span class="o">&gt;=</span> <span class="n">NCRIT</span><span class="p">):</span>
+            <span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">ntarget</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="n">octant</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">xc</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">yi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">Cells</span><span class="p">[</span>
+                <span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">yc</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">zi</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">zc</span><span class="p">)</span> <span class="o">*</span> <span class="mi">4</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="p">(</span><span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">nchild</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">octant</span><span class="p">))):</span>
+                <span class="n">Ncell</span> <span class="o">=</span> <span class="n">add_child</span><span class="p">(</span><span class="n">octant</span><span class="p">,</span> <span class="n">Cells</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">NCRIT</span><span class="p">,</span> <span class="n">Nm</span><span class="p">,</span> <span class="n">Ncell</span><span class="p">)</span>
+
+            <span class="n">C</span> <span class="o">=</span> <span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">child</span><span class="p">[</span><span class="n">octant</span><span class="p">]</span>
+
+        <span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">target</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">ntarget</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">Cells</span><span class="p">[</span><span class="n">C</span><span class="p">]</span><span class="o">.</span><span class="n">ntarget</span> <span class="o">&gt;=</span> <span class="n">NCRIT</span><span class="p">):</span>
+            <span class="n">Ncell</span> <span class="o">=</span> <span class="n">split_cell</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">zi</span><span class="p">,</span> <span class="n">Cells</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">NCRIT</span><span class="p">,</span> <span class="n">Nm</span><span class="p">,</span> <span class="n">Ncell</span><span class="p">)</span>
+
+    <span class="n">Cells</span> <span class="o">=</span> <span class="n">Cells</span><span class="p">[:</span><span class="n">Ncell</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">Cells</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Christopher Cooper, Natalia Clementi, Gil Forsyth, Lorena Barba.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

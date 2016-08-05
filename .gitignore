@@ -1,0 +1,14 @@
+# Large files
+geometry/sphere/sphere520K*
+
+# file types
+*.pyc
+*.txt
+*.o
+*.so
+*_wrap.cxx
+*.log
+
+# regression test output
+tests/regression_tests/figs/*
+_build
